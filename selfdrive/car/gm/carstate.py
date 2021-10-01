@@ -119,6 +119,8 @@ class CarState(CarStateBase):
       ("CruiseMainOn", "ECMEngineStatus", 0),
       ("ACCCmdActive", "ASCMActiveCruiseControlStatus", 0),
       ("LKATotalTorqueDelivered", "PSCMStatus", 0),
+      ("VehicleSpeed", "ECMVehicleSpeed", 0),
+
     ]
 
 
