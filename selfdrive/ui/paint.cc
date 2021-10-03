@@ -325,7 +325,7 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
   }
 
   // add battery level
-  float batteryTemp = (*s->sm)["deviceState"].getDeviceState().getBatteryTempC();
+  float batteryTemp = (*s->sm)["deviceState"].getDeviceState().getAmbientTempC();
   bool batteryless =  batteryTemp < -20;
   if(UI_FEATURE_BATTERY_LEVEL && !batteryless) {
     char val_str[16];
