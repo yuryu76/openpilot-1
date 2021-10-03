@@ -88,7 +88,7 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.kiV = [0.05, 0.03]
     ret.longitudinalTuning.deadzoneBP = [0., 100.*CV.KPH_TO_MS]
     ret.longitudinalTuning.deadzoneV = [0., 0.015]
-    ret.longitudinalActuatorDelay = 0.2
+    # ret.longitudinalActuatorDelay = 0.2
 
     if ret.enableGasInterceptor:
       ret.gasMaxBP = [0.0, 5.0, 9.0, 35.0]
