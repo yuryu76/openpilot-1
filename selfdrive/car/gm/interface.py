@@ -16,8 +16,8 @@ class CarInterface(CarInterfaceBase):
   def get_pid_accel_limits(CP, current_speed, cruise_speed):
     v_current_kph = current_speed * CV.MS_TO_KPH
 
-    gas_max_bp = [0., 10., 20., 50., 70., 130.]
-    gas_max_v = [1.8, 1.15, 0.87, 0.63, 0.45, 0.33]
+    gas_max_bp = [0., 5., 10., 20., 50., 70., 130.]
+    gas_max_v = [0.7, 0.9, 1.15, 0.87, 0.63, 0.45, 0.33]
 
     brake_max_bp = [0, 70., 130.]
     brake_max_v = [-4., -3., -2.1]
@@ -65,9 +65,11 @@ class CarInterface(CarInterfaceBase):
     ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
     ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
     ret.lateralTuning.lqr.c = [1., 0.]
-    ret.lateralTuning.lqr.k = [-110., 451.]
-    ret.lateralTuning.lqr.l = [0.33, 0.318]
-    ret.lateralTuning.lqr.dcGain = 0.00225
+    ret.lateralTuning.lqr.k = [-110.73572306, 451.22718255]
+    ret.lateralTuning.lqr.l =  [0.3233671, 0.3185757]
+    ret.lateralTuning.lqr.dcGain = 0.002237852961363602
+
+
 
 
 
@@ -92,12 +94,16 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.deadzoneV = [0., 0.015]
     # ret.longitudinalActuatorDelay = 0.2
 
-    if ret.enableGasInterceptor:
-      ret.gasMaxBP = [0.0, 5.0, 9.0, 35.0]
-      ret.gasMaxV =  [0.4, 0.5, 0.7, 0.7]
+    # if ret.enableGasInterceptor:
+    #   ret.gasMaxBP = [0.0, 5.0, 9.0, 35.0]
+    #   ret.gasMaxV =  [0.4, 0.5, 0.7, 0.7]
 
-    ret.stoppingControl = False
-    ret.startAccel = 0.4
+    ret.stoppingControl = True
+    ret.vEgoStopping = 2.0
+    ret.startAccel = 0.2
+    ret.vEgoStarting = 1.0
+
+    ret.stopAccel = -0.5
 
     ret.steerLimitTimer = 1.5
     ret.radarTimeStep = 0.0667  # GM radar runs at 15Hz instead of standard 20Hz
@@ -145,11 +151,11 @@ class CarInterface(CarInterfaceBase):
       events.add(EventName.parkBrake)
     if ret.vEgo < self.CP.minSteerSpeed:
       events.add(car.CarEvent.EventName.belowSteerSpeed)
-    # if self.CP.enableGasInterceptor:
-    if self.CS.adaptive_Cruise and ret.brakePressed:
-      events.add(EventName.pedalPressed)
-      self.CS.adaptive_Cruise = False
-      self.CS.enable_lkas = True
+    if self.CP.enableGasInterceptor:
+      if self.CS.adaptive_Cruise and ret.brakePressed:
+        events.add(EventName.pedalPressed)
+        self.CS.adaptive_Cruise = False
+        self.CS.enable_lkas = True
 
     # handle button presses
     if not self.CS.main_on and self.CP.enableGasInterceptor:

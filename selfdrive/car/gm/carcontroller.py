@@ -9,7 +9,7 @@ from opendbc.can.packer import CANPacker
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
-VEL = [13.889, 16.667, 25.]  # velocities
+VEL = [50*CV.KPH_TO_MS, 60*CV.KPH_TO_MS, 90*KPH_TO_MS]  # velocities
 MIN_PEDAL = [0.02, 0.05, 0.1]
 
 def accel_hysteresis(accel, accel_steady):
@@ -68,15 +68,22 @@ class CarController():
         final_pedal = 0
       elif CS.adaptive_Cruise:
         min_pedal_speed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
-        pedal = clip(actuators.gas, min_pedal_speed, 1.)
-        regen = actuators.brake
+        apply_accel = actuators.accel / CarControllerParams.ACCEL_SCALE
+        apply_accel, self.accel_steady = accel_hysteresis(apply_accel, self.accel_steady)
+        final_gas = clip(actuators.accel, 0., 0.7)
+        final_brake = -clip(actuators.accel, -1., 0.)
+
+        #apply_accel = self.scc_smoother.get_accel(CS, controls.sm, apply_accel) # NTune 긁는 부분임
+
+        pedal = clip(final_gas, min_pedal_speed, 1.)
+        regen = final_brake
         pedal, self.accel_steady = accel_hysteresis(pedal, self.accel_steady)
         final_pedal = clip(pedal - regen, 0., 1.)
         if regen > 0.1:
           can_sends.append(gmcan.create_regen_paddle_command(self.packer_pt, CanBus.POWERTRAIN))
-
-      idx = (frame // 2) % 4
-      can_sends.append(create_gas_command(self.packer_pt, final_pedal, idx))
+          final_pedal = final_pedal/2
+        idx = (frame // 2) % 4
+        can_sends.append(create_gas_command(self.packer_pt, final_pedal, idx))
       #self.apply_pedal_last = final_pedal
 
     # Send dashboard UI commands (ACC status), 25hz
