@@ -120,7 +120,6 @@ static void update_state(UIState *s) {
     if (sm.rcv_frame("modelV2") > 0) {
       line = sm["modelV2"].getModelV2().getPosition();
     }
-    update_leads(s, sm["radarState"].getRadarState(), line);
     auto radar_state = sm["radarState"].getRadarState();
     s->scene.lead_v_rel = radar_state.getLeadOne().getVRel();
     s->scene.lead_d_rel = radar_state.getLeadOne().getDRel();
