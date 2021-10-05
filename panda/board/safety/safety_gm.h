@@ -53,8 +53,7 @@ int bus_vehicle = -1;
 
 static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-  bool valid = addr_safety_check(to_push, gm_rx_checks, GM_RX_CHECK_LEN,
-                                 NULL, NULL, NULL);
+  bool valid = addr_safety_check(to_push, &gm_rx_checks, NULL, NULL, NULL);
 
   int addr = GET_ADDR(to_push);
   int bus = GET_BUS(to_push);
