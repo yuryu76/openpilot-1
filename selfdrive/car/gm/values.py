@@ -36,6 +36,7 @@ class CarControllerParams():
     self.ACCEL_MIN = -4.0
     self.ACCEL_SCALE = 3.0  # max(ACCEL_MAX, -ACCEL_MIN)
 
+
     self.MAX_ACC_REGEN = 1404  # ACC Regen braking is slightly less powerful than max regen paddle
     self.GAS_LOOKUP_BP = [-1.0, 0., self.ACCEL_MAX]
     self.GAS_LOOKUP_V = [self.MAX_ACC_REGEN, ZERO_GAS, MAX_GAS]

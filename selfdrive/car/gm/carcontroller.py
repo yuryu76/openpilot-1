@@ -68,7 +68,7 @@ class CarController():
         final_pedal = 0
       elif CS.adaptive_Cruise:
         min_pedal_speed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
-        apply_accel = actuators.accel / CarControllerParams.ACCEL_SCALE
+        apply_accel = actuators.accel / self.params.ACCEL_SCALE
         apply_accel, self.accel_steady = accel_hysteresis(apply_accel, self.accel_steady)
         final_gas = clip(actuators.accel, 0., 0.7)
         final_brake = -clip(actuators.accel, -1., 0.)
