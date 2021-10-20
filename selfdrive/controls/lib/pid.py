@@ -1,5 +1,6 @@
 import numpy as np
 from common.numpy_fast import clip, interp
+from numbers import Number
 from selfdrive.config import Conversions as CV
 
 def apply_deadzone(error, deadzone):
