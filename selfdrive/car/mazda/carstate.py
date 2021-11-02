@@ -78,8 +78,9 @@ class CarState(CarStateBase):
         self.low_speed_lockout = False
         self.low_speed_alert = False
 
-    # On if no driver torque the last 5 seconds
-    ret.steerWarning = cp.vl["STEER_RATE"]["HANDS_OFF_5_SECONDS"] == 1
+    # Check if LKAS is disabled due to lack of driver torque when all other states indicate
+    # it should be enabled (steer lockout)
+    ret.steerWarning = self.lkas_allowed and (cp.vl["STEER_RATE"]["LKAS_BLOCK"] == 1)
 
     self.acc_active_last = ret.cruiseState.enabled
 

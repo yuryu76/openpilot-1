@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from cereal import car
 from common.numpy_fast import interp
+from math import fabs
 from selfdrive.config import Conversions as CV
 from selfdrive.car.gm.values import CAR, CruiseButtons, \
                                     AccState, CarControllerParams
@@ -14,6 +15,8 @@ EventName = car.CarEvent.EventName
 class CarInterface(CarInterfaceBase):
   @staticmethod
   def get_pid_accel_limits(CP, current_speed, cruise_speed):
+    #params = CarControllerParams()
+    #return params.ACCEL_MIN, params.ACCEL_MAX
     v_current_kph = current_speed * CV.MS_TO_KPH
 
     gas_max_bp = [0., 5., 10., 20., 50., 70., 130.]
@@ -23,6 +26,21 @@ class CarInterface(CarInterfaceBase):
     brake_max_v = [-4., -3., -2.1]
 
     return interp(v_current_kph, brake_max_bp, brake_max_v), interp(v_current_kph, gas_max_bp, gas_max_v)
+
+  # Volt determined by iteratively plotting and minimizing error for f(angle, speed) = steer.
+  @staticmethod
+  def get_steer_feedforward_volt(desired_angle, v_ego):
+    # maps [-inf,inf] to [-1,1]: sigmoid(34.4 deg) = sigmoid(1) = 0.5
+    # 1 / 0.02904609 = 34.4 deg ~= 36 deg ~= 1/10 circle? Arbitrary?
+    desired_angle *= 0.02904609
+    sigmoid = desired_angle / (1 + fabs(desired_angle))
+    return 0.10006696 * sigmoid * (v_ego + 3.12485927)
+
+  def get_steer_feedforward_function(self):
+    if self.CP.carFingerprint in [CAR.VOLT]:
+      return self.get_steer_feedforward_volt
+    else:
+      return CarInterfaceBase.get_steer_feedforward_default
 
   @staticmethod
   def compute_gb(accel, speed):
