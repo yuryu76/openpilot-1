@@ -210,9 +210,11 @@ class Controls:
     # TODO: make tici threshold the same
     if self.sm['deviceState'].memoryUsagePercent > (90 if TICI else 65) and not SIMULATION:
       self.events.add(EventName.lowMemory)
-    cpus = list(self.sm['deviceState'].cpuUsagePercent)[:(-1 if EON else None)]
-    if max(cpus, default=0) > 95 and not SIMULATION:
-      self.events.add(EventName.highCpuUsage)
+
+    # TODO: enable this once loggerd CPU usage is more reasonable
+    #cpus = list(self.sm['deviceState'].cpuUsagePercent)[:(-1 if EON else None)]
+    #if max(cpus, default=0) > 95 and not SIMULATION:
+    #  self.events.add(EventName.highCpuUsage)
 
     # Alert if fan isn't spinning for 5 seconds
     if self.sm['peripheralState'].pandaType in [PandaType.uno, PandaType.dos]:
@@ -286,8 +288,10 @@ class Controls:
     for pandaState in self.sm['pandaStates']:
       if log.PandaState.FaultType.relayMalfunction in pandaState.faults:
         self.events.add(EventName.relayMalfunction)
+
+    stock_long_is_braking = self.enabled and not self.CP.openpilotLongitudinalControl and CS.aEgo < -1.5
+    model_fcw = self.sm['modelV2'].meta.hardBrakePredicted and not CS.brakePressed and not stock_long_is_braking
     planner_fcw = self.sm['longitudinalPlan'].fcw and self.enabled
-    model_fcw = self.sm['modelV2'].meta.hardBrakePredicted and not CS.brakePressed
     if planner_fcw or model_fcw:
       self.events.add(EventName.fcw)
 
