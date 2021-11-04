@@ -21,6 +21,10 @@ class CarControllerParams():
   ACCEL_MAX = 2. # m/s^2
   ACCEL_MIN = -4. # m/s^2
 
+  MAX_GAS = 3072  # Only a safety limit
+  ZERO_GAS = 2048
+  MAX_BRAKE = 350  # Should be around 3.5m/s^2, including regen
+
   MAX_ACC_REGEN = 1404  # Max ACC regen is slightly less than max paddle regen
   GAS_LOOKUP_BP = [-1., 0., ACCEL_MAX]
   GAS_LOOKUP_V = [MAX_ACC_REGEN, ZERO_GAS, MAX_GAS]
@@ -44,9 +48,7 @@ class CarControllerParams():
     self.CAMERA_KEEPALIVE_STEP = 100
 
     # pedal lookups, only for Volt
-    MAX_GAS = 3072              # Only a safety limit
-    ZERO_GAS = 2048
-    MAX_BRAKE = 350             # Should be around 3.5m/s^2, including regen
+
     self.ACCEL_MAX = 2.0 # m/s^2
 
     # Allow small margin below -3.5 m/s^2 from ISO 15622:2018 since we
