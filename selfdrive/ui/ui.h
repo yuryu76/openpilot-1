@@ -1,4 +1,27 @@
 #pragma once
+#define UI_FEATURE_BRAKE 1
+#define UI_FEATURE_AUTOHOLD 1
+#define UI_FEATURE_DASHCAM 1
+
+#define UI_FEATURE_LEFT 1
+#define UI_FEATURE_RIGHT 1
+
+#define UI_FEATURE_LEFT_Y 220
+#define UI_FEATURE_RIGHT_Y 10
+
+#define UI_FEATURE_LEFT_REL_DIST 1
+#define UI_FEATURE_LEFT_REL_SPEED 1
+#define UI_FEATURE_LEFT_REAL_STEER 1
+#define UI_FEATURE_LEFT_DESIRED_STEER 1
+
+#define UI_FEATURE_RIGHT_CPU_TEMP 1
+#define UI_FEATURE_RIGHT_AMBIENT_TEMP 1
+#define UI_FEATURE_RIGHT_BATTERY_LEVEL 1
+#define UI_FEATURE_RIGHT_GPS_ALTITUDE 1
+#define UI_FEATURE_RIGHT_GPS_ACCURACY 1
+#define UI_FEATURE_RIGHT_GPS_SATELLITE 1
+
+#include <atomic>
 
 #include <map>
 #include <memory>
@@ -17,6 +40,8 @@
 #include "selfdrive/common/modeldata.h"
 #include "selfdrive/common/params.h"
 #include "selfdrive/common/util.h"
+#include "selfdrive/common/visionimg.h"
+#include "selfdrive/common/touch.h"
 
 #define COLOR_BLACK nvgRGBA(0, 0, 0, 255)
 #define COLOR_BLACK_ALPHA(x) nvgRGBA(0, 0, 0, x)
@@ -127,6 +152,8 @@ typedef struct UIScene {
   cereal::ControlsState::Reader controls_state;
   cereal::DriverState::Reader driver_state;
   cereal::DriverMonitoringState::Reader dmonitoring_state;
+  Cereal::GpsLocationData::Reader gps_ext;
+  int satelliteCount;
 
 } UIScene;
 
