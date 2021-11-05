@@ -413,29 +413,12 @@ def thermald_thread():
     # Check if we need to disable charging (handled by boardd)
     msg.deviceState.chargingDisabled = power_monitor.should_disable_charging(startup_conditions["ignition"], in_car, off_ts)
 
-    # Set EON charging disable
-    # based on kegman, ���� ���й��͸��� ����, �̿� ���͸� �ۼ�Ƽ��,
-    if EON:
-      from selfdrive.thermald.eon_battery_manager import setEONChargingStatus
-      setEONChargingStatus(power_monitor.car_voltage_mV, msg.deviceState.batteryPercent)
-   
-
     # Check if we need to shut down
     if power_monitor.should_shutdown(peripheralState, startup_conditions["ignition"], in_car, off_ts, started_seen):
       cloudlog.info(f"shutting device down, offroad since {off_ts}")
       # TODO: add function for blocking cloudlog instead of sleep
       time.sleep(10)
       HARDWARE.shutdown()
-
-    # dp - auto shutdown
-    if off_ts is not None and not HARDWARE.get_usb_present():
-      shutdown_sec = 240
-      sec_now = sec_since_boot() - off_ts
-      if (shutdown_sec - 5) < sec_now:
-        msg.deviceState.chargingDisabled = True
-      if shutdown_sec < sec_now:
-        time.sleep(5)
-        HARDWARE.shutdown()
 
     # If UI has crashed, set the brightness to reasonable non-zero value
     ui_running = "ui" in (p.name for p in sm["managerState"].processes if p.running)
