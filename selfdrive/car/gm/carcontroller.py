@@ -70,14 +70,14 @@ class CarController():
         min_pedal_speed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
         #final_gas = clip(actuators.accel, min_pedal_speed, 1)
         #final_brake = -clip(actuators.accel, -1., min_pedal_speed)
-        pedal_accel = actuators.accel / 3
+        pedal_accel = actuators.accel / 4
         pedal = clip(pedal_accel, min_pedal_speed, 1.)
-        regen = -(actuators.accel)/3
+        regen = - pedal_accel
         pedal, self.accel_steady = accel_hysteresis(pedal, self.accel_steady)
         final_pedal = clip(pedal - regen, 0., 1.)
         if regen > 0.1:
           can_sends.append(gmcan.create_regen_paddle_command(self.packer_pt, CanBus.POWERTRAIN))
-          #final_pedal = final_pedal/2
+
         idx = (frame // 2) % 4
         can_sends.append(create_gas_command(self.packer_pt, final_pedal, idx))
       #self.apply_pedal_last = final_pedal
