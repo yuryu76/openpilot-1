@@ -33,9 +33,9 @@ class CarControllerParams():
 
   def __init__(self):
     self.STEER_MAX = 300
-    self.STEER_STEP = 2              # how often we update the steer cmd
-    self.STEER_DELTA_UP = 7           # ~0.75s time to peak torque (255/50hz/0.75s)
-    self.STEER_DELTA_DOWN = 17        # ~0.3s from peak torque to zero
+    self.STEER_STEP = 4              # how often we update the steer cmd
+    self.STEER_DELTA_UP = 8           # ~0.75s time to peak torque (255/50hz/0.75s)
+    self.STEER_DELTA_DOWN = 12        # ~0.3s from peak torque to zero
     self.MIN_STEER_SPEED = 3.
     self.STEER_DRIVER_ALLOWANCE = 50   # allowed driver torque before start limiting
     self.STEER_DRIVER_MULTIPLIER = 4   # weight driver torque heavily
@@ -58,15 +58,15 @@ class CarControllerParams():
 
     # Our controller should still keep the 2 second average above
     # -3.5 m/s^2 as per planner limits
-    self.ACCEL_MAX = 2.
+    self.ACCEL_MAX = 1.5
     self.ACCEL_MIN = -4.0
     self.ACCEL_SCALE = 3.0  # max(ACCEL_MAX, -ACCEL_MIN)
 
 
     self.MAX_ACC_REGEN = 1404  # ACC Regen braking is slightly less powerful than max regen paddle
-    self.GAS_LOOKUP_BP = [-1, 0., self.ACCEL_MAX]
+    self.GAS_LOOKUP_BP = [-0.75, 0., self.ACCEL_MAX]
     self.GAS_LOOKUP_V = [self.MAX_ACC_REGEN, ZERO_GAS, MAX_GAS]
-    self.BRAKE_LOOKUP_BP = [self.ACCEL_MIN, -0.1]
+    self.BRAKE_LOOKUP_BP = [self.ACCEL_MIN, -0.25]
     self.BRAKE_LOOKUP_V = [MAX_BRAKE, 0]
 
     self.ACCEL_HYST_GAP = 0.02
