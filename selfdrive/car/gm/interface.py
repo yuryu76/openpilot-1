@@ -100,7 +100,7 @@ class CarInterface(CarInterfaceBase):
 
     # longitudinal
     ret.longitudinalTuning.kpBP = [0., 30.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 90.*CV.KPH_TO_MS]
-    ret.longitudinalTuning.kpV = [0.9, 0.8, 0.68, 0.43]
+    ret.longitudinalTuning.kpV = [1.15, 0.85, 0.7, 0.43]
     #ret.longitudinalTuning.kpBP = [0., 10.*CV.KPH_TO_MS, 20.*CV.KPH_TO_MS, 40.*CV.KPH_TO_MS, 70.*CV.KPH_TO_MS, 100.*CV.KPH_TO_MS, 130.*CV.KPH_TO_MS]
     #ret.longitudinalTuning.kpV = [1.3, 1.0, 0.9, 0.8, 0.6, 0.5, 0.4]
     
@@ -123,9 +123,6 @@ class CarInterface(CarInterfaceBase):
     ret.vEgoStopping = 0.6
     ret.vEgoStarting = 0.5
     ret.stoppingControl = True
-    #선행차가 감속할 때 pid에서 stopping 단계로 바뀝니다. 숫자가 작으면, 즉 앞차감속이 조금만 일어나도 감속에 들어갈 수 있습니다. 무조건 민감한건 아니고 다른조건들과 곁들여서,,    
-    #starting 단계에서 이 수치까지 초당 startingAccelRate 만큼 가속도를 올립니다. 이 수치가 넘으면 pid 상태로 넘깁니다. 현재 콤마 기본값이 -0.8이니 오파가 시작되는 순간 곧바로 이 값에 도달할듯함.
-    #선행차의 속도가 이 수치보다 커야 stopping에서 starting으로 변합니다. 
     
     ret.steerLimitTimer = 1.5
     ret.radarTimeStep = 0.0667  # GM radar runs at 15Hz instead of standard 20Hz
