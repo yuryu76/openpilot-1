@@ -111,6 +111,9 @@ class CarInterface(CarInterfaceBase):
     # ret.longitudinalActuatorDelay = 0.2
     ret.longitudinalActuatorDelayLowerBound = 0.15
     ret.longitudinalActuatorDelayUpperBound = 0.3
+    #선행차가 감속할 때 pid에서 stopping 단계로 바뀝니다. 숫자가 작으면, 즉 앞차감속이 조금만 일어나도 감속에 들어갈 수 있습니다. 무조건 민감한건 아니고 다른조건들과 곁들여서,,
+    #starting 단계에서 이 수치까지 초당 startingAccelRate 만큼 가속도를 올립니다. 이 수치가 넘으면 pid 상태로 넘깁니다. 현재 콤마 기본값이 -0.8이니 오파가 시작되는 순간 곧바로 이 값에 도달할듯함.
+    #선행차의 속도가 이 수치보다 커야 stopping에서 starting으로 변합니다.
     
     ret.startAccel = -0.4
     ret.stopAccel = -2.0
@@ -191,6 +194,25 @@ class CarInterface(CarInterfaceBase):
       self.CS.adaptive_Cruise = False
       self.CS.enable_lkas = True
 
+    #Added by jc01rho inspired by JangPoo
+    # if self.CS.main_on  and ret.cruiseState.enabled and ret.gearShifter == GearShifter.drive and ret.vEgo > 2 and not ret.brakePressed :
+    #   if ret.cruiseState.available and not ret.seatbeltUnlatched and not ret.espDisabled and self.flag_pcmEnable_able :
+    #
+    #     if self.flag_pcmEnable_initialSet == False :
+    #       self.initial_pcmEnable_counter = self.initial_pcmEnable_counter + 1
+    #       if self.initial_pcmEnable_counter > 750 :
+    #         events.add(EventName.pcmEnable)
+    #         self.flag_pcmEnable_initialSet = True
+    #         self.flag_pcmEnable_able = False
+    #         self.initial_pcmEnable_counter = 0
+    #     else :
+    #       events.add(EventName.pcmEnable)
+    #       self.flag_pcmEnable_able = False
+    #       # self.flag_pcmEnable_initialSet = True
+    #       # self.initial_pcmEnable_counter = 0
+    # else  :
+    #   self.flag_pcmEnable_able = True
+    ###
     ret.events = events.to_msg()
 
     # copy back carState packet to CS
