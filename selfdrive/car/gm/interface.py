@@ -19,10 +19,10 @@ class CarInterface(CarInterfaceBase):
     v_current_kph = current_speed * CV.MS_TO_KPH
     
     gas_max_bp = [0., 30., 60., 90.]
-    gas_max_v = [0.5, 0.7, 0.7, 0.5]
+    gas_max_v = [0.3, 0.5, 0.5, 0.5]
 
     brake_max_bp = [0, 70., 130.]
-    brake_max_v = [-6., -3., -2.1]
+    brake_max_v = [-4., -3., -2.1]
 
     return interp(v_current_kph, brake_max_bp, brake_max_v), interp(v_current_kph, gas_max_bp, gas_max_v)
 
@@ -114,7 +114,7 @@ class CarInterface(CarInterfaceBase):
     
     ret.startAccel = -0.4
     ret.stopAccel = -2.0
-    ret.startingAccelRate = 2.0
+    ret.startingAccelRate = 4.0
     ret.stoppingDecelRate = 4.0
     ret.vEgoStopping = 0.6
     ret.vEgoStarting = 0.5
