@@ -325,6 +325,7 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
   }
 
   // add battery level
+  #if defined(QCOM) || defined(QCOM2) //preprocessor level cut-off
   if (Hardware::EON()) {
       float batteryTemp = (*s->sm)["deviceState"].getDeviceState().getAmbientTempC();
       bool batteryless =  batteryTemp < -20;
@@ -346,6 +347,7 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
       }
 
   }
+  #endif
 
   //finally draw the frame
   bb_h += 20;
