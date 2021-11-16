@@ -18,8 +18,11 @@ class CarInterface(CarInterfaceBase):
     #return params.ACCEL_MIN, params.ACCEL_MAX
     v_current_kph = current_speed * CV.MS_TO_KPH
     
-    gas_max_bp = [0., 30., 60., 90.]
-    gas_max_v = [0.5, 0.6, 0.8, 0.7]
+#    gas_max_bp = [0., 30., 60., 90.]
+#    gas_max_v = [0.5, 0.6, 0.8, 0.7]
+    
+    gas_max_bp = [0., 10., 25., 40., 60., 80., 100., 110.]
+    gas_max_v = [0.3, 0.4, 0.5, 0.6, 0.75, 0.75, 0.7, 0.7]
 
     brake_max_bp = [0, 70., 130.]
     brake_max_v = [-4., -3., -2.1]
@@ -95,10 +98,10 @@ class CarInterface(CarInterfaceBase):
                                                                          tire_stiffness_factor=tire_stiffness_factor)
 
     # longitudinal
-    ret.longitudinalTuning.kpBP = [0., 30.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 90.*CV.KPH_TO_MS]
-    ret.longitudinalTuning.kpV = [1.15, 1.1, 0.9, 0.43]
-    #ret.longitudinalTuning.kpBP = [0., 10.*CV.KPH_TO_MS, 20.*CV.KPH_TO_MS, 40.*CV.KPH_TO_MS, 70.*CV.KPH_TO_MS, 100.*CV.KPH_TO_MS, 130.*CV.KPH_TO_MS]
-    #ret.longitudinalTuning.kpV = [1.3, 1.0, 0.9, 0.8, 0.6, 0.5, 0.4]
+    #ret.longitudinalTuning.kpBP = [0., 30.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 90.*CV.KPH_TO_MS]
+    #ret.longitudinalTuning.kpV = [1.15, 1.1, 0.9, 0.43]
+    ret.longitudinalTuning.kpBP = [0., 10.*CV.KPH_TO_MS, 25.*CV.KPH_TO_MS, 40.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 80.*CV.KPH_TO_MS, 100.*CV.KPH_TO_MS, 110.*CV.KPH_TO_MS]
+    ret.longitudinalTuning.kpV = [1.15, 1.1, 0.9, 0.8, 0.65, 0.55, 0.3, 0.2]
     
     ret.longitudinalTuning.kiBP = [0., 130. * CV.KPH_TO_MS]
     ret.longitudinalTuning.kiV = [0.05, 0.03]
@@ -112,7 +115,7 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalActuatorDelayLowerBound = 0.15
     ret.longitudinalActuatorDelayUpperBound = 0.3
     
-    ret.startAccel = -0.4
+    ret.startAccel = -0.1
     ret.stopAccel = -2.0
     ret.startingAccelRate = 4.0
     ret.stoppingDecelRate = 4.0
