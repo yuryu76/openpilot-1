@@ -166,10 +166,10 @@ static void ui_draw_latlong(UIState *s) {
 //  ui_draw_image(s, {x, y, w, h}, img, 1.f);
 
   if (lkasEnabled) {
-    ui_draw_image(s, {x-w, y, w, h}, "img_lat", 1.f);
+    ui_draw_image(s, {x-w, y, w, h}, "lat_img", 1.f);
   }
   if(adaptiveCruise) {
-    ui_draw_image(s, {x+w, y, w, h}, "img_long", 1.f);
+    ui_draw_image(s, {x+w, y, w, h}, "long_img", 1.f);
   }
 
 
