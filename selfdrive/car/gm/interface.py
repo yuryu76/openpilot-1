@@ -173,7 +173,7 @@ class CarInterface(CarInterfaceBase):
       if self.CS.adaptive_Cruise and ret.brakePressed:
         events.add(EventName.pedalPressed)
         self.CS.adaptive_Cruise = False
-        self.CS.enable_lkas = True
+        self.CS.enable_lkas = False
 
     # handle button presses
     if not self.CS.main_on and self.CP.enableGasInterceptor:
