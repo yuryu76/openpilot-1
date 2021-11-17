@@ -22,7 +22,7 @@ class CarInterface(CarInterfaceBase):
 #    gas_max_v = [0.5, 0.6, 0.8, 0.7]
     
     gas_max_bp = [0., 10., 25., 40., 60., 80., 100., 110.]
-    gas_max_v = [0.3, 0.4, 0.5, 0.6, 0.75, 0.75, 0.7, 0.7]
+    gas_max_v = [0.5, 0.5, 0.55, 0.6, 0.7, 0.75, 0.7, 0.7]
 
     brake_max_bp = [0, 70., 130.]
     brake_max_v = [-4., -3., -2.1]
@@ -116,9 +116,9 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalActuatorDelayUpperBound = 0.3
     
     ret.startAccel = -0.8
-    ret.stopAccel = -2.0
+    ret.stopAccel = -0.5
     ret.startingAccelRate = 4.0
-    ret.stoppingDecelRate = 4.0
+    ret.stoppingDecelRate = 5.0
     ret.vEgoStopping = 0.6
     ret.vEgoStarting = 0.5
     ret.stoppingControl = True
