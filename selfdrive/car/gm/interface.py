@@ -22,7 +22,7 @@ class CarInterface(CarInterfaceBase):
 #    gas_max_v = [0.5, 0.6, 0.8, 0.7]
     
     gas_max_bp = [0., 10., 25., 40., 60., 80., 100., 110.]
-    gas_max_v = [0.3, 0.4, 0.5, 0.6, 0.75, 0.75, 0.7, 0.7]
+    gas_max_v = [0.5, 0.5, 0.55, 0.6, 0.7, 0.75, 0.7, 0.7]
 
     brake_max_bp = [0, 70., 130.]
     brake_max_v = [-4., -3., -2.1]
@@ -101,10 +101,10 @@ class CarInterface(CarInterfaceBase):
     #ret.longitudinalTuning.kpBP = [0., 30.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 90.*CV.KPH_TO_MS]
     #ret.longitudinalTuning.kpV = [1.15, 1.1, 0.9, 0.43]
     ret.longitudinalTuning.kpBP = [0., 10.*CV.KPH_TO_MS, 25.*CV.KPH_TO_MS, 40.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 80.*CV.KPH_TO_MS, 100.*CV.KPH_TO_MS, 110.*CV.KPH_TO_MS]
-    ret.longitudinalTuning.kpV = [1.15, 1.1, 0.9, 0.8, 0.65, 0.55, 0.3, 0.2]
+    ret.longitudinalTuning.kpV = [1.15, 1.1, 0.8, 0.68, 0.6, 0.55, 0.51, 0.48]
     
     ret.longitudinalTuning.kiBP = [0., 130. * CV.KPH_TO_MS]
-    ret.longitudinalTuning.kiV = [0.05, 0.03]
+    ret.longitudinalTuning.kiV = [0.07, 0.04]
     
     #ret.longitudinalTuning.kfBP = [15., 20., 25.]
     #ret.longitudinalTuning.kfV = [1., 0.5, 0.2]
@@ -119,9 +119,9 @@ class CarInterface(CarInterfaceBase):
     #선행차의 속도가 이 수치보다 커야 stopping에서 starting으로 변합니다.
     
     ret.startAccel = -0.8
-    ret.stopAccel = -2.0
+    ret.stopAccel = -0.5
     ret.startingAccelRate = 4.0
-    ret.stoppingDecelRate = 4.0
+    ret.stoppingDecelRate = 5.0
     ret.vEgoStopping = 0.6
     ret.vEgoStarting = 0.5
     ret.stoppingControl = True
