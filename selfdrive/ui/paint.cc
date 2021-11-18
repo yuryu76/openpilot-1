@@ -261,6 +261,7 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
   int label_fontSize=15;
   int uom_fontSize = 15;
   int bb_uom_dx =  (int)(bb_w /2 - uom_fontSize*2.5) ;
+   auto device_state = (*s->sm)["deviceState"].getDeviceState();
 
   //add visual radar relative distance
   if (true) {
@@ -323,17 +324,47 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
         value_fontSize, label_fontSize, uom_fontSize );
     bb_ry = bb_y + bb_h;
   }
-
-  /*// add battery level
-  float batteryTemp = (*s->sm)["deviceState"].getDeviceState().getAmbientTempC();
-  bool batteryless =  batteryTemp < -20;
-  if(UI_FEATURE_BATTERY_LEVEL && !batteryless) {
-    char val_str[16];
+  // add CPU temperature
+  if (UI_FEATURE_RIGHT_CPU_TEMP) {
+        char val_str[16];
     char uom_str[6];
-    //char bat_lvl[4] = "";
     NVGcolor val_color = nvgRGBA(255, 255, 255, 200);
 
-    int batteryPercent = (*s->sm)["deviceState"].getDeviceState().getBatteryPercent();
+    float cpuTemp = 0;
+    auto cpuList = device_state.getCpuTempC();
+
+    if(cpuList.size() > 0)
+    {
+        for(int i = 0; i < cpuList.size(); i++)
+            cpuTemp += cpuList[i];
+
+        cpuTemp /= cpuList.size();
+    }
+
+      if(cpuTemp > 80.f) {
+        val_color = nvgRGBA(255, 188, 3, 200);
+      }
+      if(cpuTemp > 92.f) {
+        val_color = nvgRGBA(255, 0, 0, 200);
+      }
+      // temp is alway in C * 10
+      snprintf(val_str, sizeof(val_str), "%.1f", cpuTemp);
+      snprintf(uom_str, sizeof(uom_str), "");
+    bb_h +=bb_ui_draw_measure(s,  val_str, uom_str, "CPU TEMP",
+        bb_rx, bb_ry, bb_uom_dx,
+        val_color, lab_color, uom_color,
+        value_fontSize, label_fontSize, uom_fontSize );
+    bb_ry = bb_y + bb_h;
+  }
+
+  // add battery level
+  if(UI_FEATURE_RIGHT_BATTERY_LEVEL && !Hardware::TICI()) {
+    char val_str[16];
+    char uom_str[6];
+    char bat_lvl[4] = "";
+    NVGcolor val_color = nvgRGBA(255, 255, 255, 200);
+
+    int batteryPercent = device_state.getBatteryPercent();
 
     snprintf(val_str, sizeof(val_str), "%d%%", batteryPercent);
     snprintf(uom_str, sizeof(uom_str), "");
@@ -342,7 +373,7 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
         val_color, lab_color, uom_color,
         value_fontSize, label_fontSize, uom_fontSize );
     bb_ry = bb_y + bb_h;
-  }*/
+  }
 
   //finally draw the frame
   bb_h += 20;
