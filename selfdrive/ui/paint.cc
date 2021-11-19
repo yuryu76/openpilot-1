@@ -409,19 +409,19 @@ static void ui_draw_vision(UIState *s) {
 }
 
 static void bb_ui_draw_debug(UIState *s) {
-    const UIScene *scene = &s->scene;
-    char str[1024];
+  const UIScene *scene = &s->scene;
+  char str[1024];
 
-    int y = 80;
-    const int height = 60;
+  int y = 80;
+  const int height = 60;
 
-    nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
+  nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
 
-    const int text_x = s->fb_w/2 + s->fb_w * 10 / 55;
+  const int text_x = s->fb_w/2 + s->fb_w * 10 / 55;
 
-    auto controls_state = (*s->sm)["controlsState"].getControlsState();
-    auto car_control = (*s->sm)["carControl"].getCarControl();
-    auto car_state = (*s->sm)["carState"].getCarState();
+  auto controls_state = (*s->sm)["controlsState"].getControlsState();
+  auto car_control = (*s->sm)["carControl"].getCarControl();
+  auto car_state = (*s->sm)["carState"].getCarState();
 
 //    float applyAccel = controls_state.getApplyAccel();
 
@@ -432,40 +432,40 @@ static void bb_ui_draw_debug(UIState *s) {
 //    int sccStockCamAct = (int)controls_state.getSccStockCamAct();
 //    int sccStockCamStatus = (int)controls_state.getSccStockCamStatus();
 
-    int longControlState = (int)controls_state.getLongControlState();
-    float vPid = controls_state.getVPid();
-    float upAccelCmd = controls_state.getUpAccelCmd();
-    float uiAccelCmd = controls_state.getUiAccelCmd();
-    float ufAccelCmd = controls_state.getUfAccelCmd();
-    float accel = car_control.getActuators().getAccel();
+  int longControlState = (int)controls_state.getLongControlState();
+  float vPid = controls_state.getVPid();
+  float upAccelCmd = controls_state.getUpAccelCmd();
+  float uiAccelCmd = controls_state.getUiAccelCmd();
+  float ufAccelCmd = controls_state.getUfAccelCmd();
+  float accel = car_control.getActuators().getAccel();
 
-    const char* long_state[] = {"off", "pid", "stopping", "starting"};
+  const char* long_state[] = {"off", "pid", "stopping", "starting"};
 
-    const NVGcolor textColor = COLOR_WHITE;
+  const NVGcolor textColor = COLOR_WHITE;
 
-    y += height;
-    snprintf(str, sizeof(str), "State: %s", long_state[longControlState]);
-    ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
+  y += height;
+  snprintf(str, sizeof(str), "State: %s", long_state[longControlState]);
+  ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
 
-    y += height;
-    snprintf(str, sizeof(str), "vPid: %.3f(%.1f)", vPid, vPid * 3.6f);
-    ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
+  y += height;
+  snprintf(str, sizeof(str), "vPid: %.3f(%.1f)", vPid, vPid * 3.6f);
+  ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
 
-    y += height;
-    snprintf(str, sizeof(str), "P: %.3f", upAccelCmd);
-    ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
+  y += height;
+  snprintf(str, sizeof(str), "P: %.3f", upAccelCmd);
+  ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
 
-    y += height;
-    snprintf(str, sizeof(str), "I: %.3f", uiAccelCmd);
-    ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
+  y += height;
+  snprintf(str, sizeof(str), "I: %.3f", uiAccelCmd);
+  ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
 
-    y += height;
-    snprintf(str, sizeof(str), "F: %.3f", ufAccelCmd);
-    ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
+  y += height;
+  snprintf(str, sizeof(str), "F: %.3f", ufAccelCmd);
+  ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
 
-    y += height;
-    snprintf(str, sizeof(str), "Accel: %.3f", accel);
-    ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
+  y += height;
+  snprintf(str, sizeof(str), "Accel: %.3f", accel);
+  ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
 
 /*    y += height;
     snprintf(str, sizeof(str), "Apply Accel: %.3f, Stock Accel: %.3f", applyAccel, aReqValue);
@@ -477,21 +477,21 @@ static void bb_ui_draw_debug(UIState *s) {
 
     y += height;
     snprintf(str, sizeof(str), "Cam: %d/%d", sccStockCamAct, sccStockCamStatus);
-    ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");*/
-
-    y += height;
-    snprintf(str, sizeof(str), "Torque:%.1f/%.1f", car_state.getSteeringTorque(), car_state.getSteeringTorqueEps());
     ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
 
-    auto lead_radar = (*s->sm)["radarState"].getRadarState().getLeadOne();
-    auto lead_one = (*s->sm)["modelV2"].getModelV2().getLeadsV3()[0];
+  y += height;
+  snprintf(str, sizeof(str), "Torque:%.1f/%.1f", car_state.getSteeringTorque(), car_state.getSteeringTorqueEps());
+  ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
 
-    float radar_dist = lead_radar.getStatus() && lead_radar.getRadar() ? lead_radar.getDRel() : 0;
-    float vision_dist = lead_one.getProb() > .5 ? (lead_one.getX()[0] - 1.5) : 0;
+  auto lead_radar = (*s->sm)["radarState"].getRadarState().getLeadOne();
+  auto lead_one = (*s->sm)["modelV2"].getModelV2().getLeadsV3()[0];
 
-    y += height;
-    snprintf(str, sizeof(str), "Lead: %.1f/%.1f/%.1f", radar_dist, vision_dist, (radar_dist - vision_dist));
-    ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");
+  float radar_dist = lead_radar.getStatus() && lead_radar.getRadar() ? lead_radar.getDRel() : 0;
+  float vision_dist = lead_one.getProb() > .5 ? (lead_one.getX()[0] - 1.5) : 0;
+
+  y += height;
+  snprintf(str, sizeof(str), "Lead: %.1f/%.1f/%.1f", radar_dist, vision_dist, (radar_dist - vision_dist));
+  ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");*/
 }
 
 void ui_draw(UIState *s, int w, int h) {
