@@ -1,5 +1,8 @@
 #pragma once
 
+#define UI_FEATURE_RIGHT_CPU_TEMP 1
+#define UI_FEATURE_RIGHT_BATTERY_LEVEL 1
+
 #include <map>
 #include <memory>
 #include <string>
