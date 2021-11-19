@@ -111,8 +111,8 @@ class LongControl():
     #v_ego_pid = max(CS.vEgo, CP.minSpeedCan)  # Without this we get jumps, CAN bus reports 0 when speed < 0.3
     v_ego_pid = max(CS.vEgo, 0.)  # Without this we get jumps, CAN bus reports 0 when speed < 0.3
 
-#    if self.long_control_state == LongCtrlState.off or not CS.adaptiveCruise : #or CS.gasPressed:
-    if self.long_control_state == LongCtrlState.off or CS.gasPressed:
+    if self.long_control_state == LongCtrlState.off or not CS.adaptiveCruise : #or CS.gasPressed:
+#    if self.long_control_state == LongCtrlState.off or CS.gasPressed:
       self.reset(v_ego_pid)
       output_accel = 0.
 
@@ -120,9 +120,9 @@ class LongControl():
       self.reset(CS.vEgo)
       output_accel = REGEN_THRESHOLD
 
-#    elif CS.gasPressed:
-#      self.reset(v_ego_pid)
-#      output_accel = REGEN_THRESHOLD
+    elif CS.gasPressed:
+      self.reset(v_ego_pid)
+      output_accel = REGEN_THRESHOLD
 
     # tracking objects and driving
     elif self.long_control_state == LongCtrlState.pid:
