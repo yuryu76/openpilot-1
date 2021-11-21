@@ -18,8 +18,11 @@ class CarInterface(CarInterfaceBase):
     #return params.ACCEL_MIN, params.ACCEL_MAX
     v_current_kph = current_speed * CV.MS_TO_KPH
     
-    gas_max_bp = [0., 30., 60., 90.]
-    gas_max_v = [0.5, 0.6, 0.8, 0.8]
+#    gas_max_bp = [0., 30., 60., 90.]
+#    gas_max_v = [0.6, 0.8, 0.8, 0.8]
+    
+    gas_max_bp = [0., 10., 25., 40., 60., 80., 100., 110.]
+    gas_max_v = [0.45, 0.5, 0.55, 0.6, 0.67, 0.75, 0.7, 0.7]
 
     brake_max_bp = [0, 70., 130.]
     brake_max_v = [-4., -3., -2.1]
@@ -95,13 +98,13 @@ class CarInterface(CarInterfaceBase):
                                                                          tire_stiffness_factor=tire_stiffness_factor)
 
     # longitudinal
-    ret.longitudinalTuning.kpBP = [0., 30.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 90.*CV.KPH_TO_MS]
-    ret.longitudinalTuning.kpV = [1.15, 1.1, 0.9, 0.43]
-    #ret.longitudinalTuning.kpBP = [0., 10.*CV.KPH_TO_MS, 20.*CV.KPH_TO_MS, 40.*CV.KPH_TO_MS, 70.*CV.KPH_TO_MS, 100.*CV.KPH_TO_MS, 130.*CV.KPH_TO_MS]
-    #ret.longitudinalTuning.kpV = [1.3, 1.0, 0.9, 0.8, 0.6, 0.5, 0.4]
+    #ret.longitudinalTuning.kpBP = [0., 30.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 90.*CV.KPH_TO_MS]
+    #ret.longitudinalTuning.kpV = [1.15, 1.1, 0.9, 0.43]
+    ret.longitudinalTuning.kpBP = [0., 10.*CV.KPH_TO_MS, 25.*CV.KPH_TO_MS, 40.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 80.*CV.KPH_TO_MS, 100.*CV.KPH_TO_MS, 110.*CV.KPH_TO_MS]
+    ret.longitudinalTuning.kpV = [1.15, 1.1, 0.8, 0.68, 0.6, 0.55, 0.51, 0.48]
     
     ret.longitudinalTuning.kiBP = [0., 130. * CV.KPH_TO_MS]
-    ret.longitudinalTuning.kiV = [0.05, 0.03]
+    ret.longitudinalTuning.kiV = [0.08, 0.05]
     
     #ret.longitudinalTuning.kfBP = [15., 20., 25.]
     #ret.longitudinalTuning.kfV = [1., 0.5, 0.2]
@@ -115,10 +118,10 @@ class CarInterface(CarInterfaceBase):
     #starting 단계에서 이 수치까지 초당 startingAccelRate 만큼 가속도를 올립니다. 이 수치가 넘으면 pid 상태로 넘깁니다. 현재 콤마 기본값이 -0.8이니 오파가 시작되는 순간 곧바로 이 값에 도달할듯함.
     #선행차의 속도가 이 수치보다 커야 stopping에서 starting으로 변합니다.
     
-    ret.startAccel = -0.4
-    ret.stopAccel = -2.0
+    ret.startAccel = -0.8
+    ret.stopAccel = -0.5
     ret.startingAccelRate = 4.0
-    ret.stoppingDecelRate = 4.0
+    ret.stoppingDecelRate = 5.0
     ret.vEgoStopping = 0.6
     ret.vEgoStarting = 0.5
     ret.stoppingControl = True
@@ -171,28 +174,47 @@ class CarInterface(CarInterfaceBase):
       events.add(car.CarEvent.EventName.belowSteerSpeed)
     if self.CP.enableGasInterceptor:
       if self.CS.adaptive_Cruise and ret.brakePressed:
-        events.add(EventName.pedalPressed)
         self.CS.adaptive_Cruise = False
-        self.CS.enable_lkas = True
+        self.CS.enable_lkas = False
+        events.add(EventName.pedalPressed)
 
     # handle button presses
-    if not self.CS.main_on and self.CP.enableGasInterceptor:
-      for b in ret.buttonEvents:
-        if (b.type == ButtonType.decelCruise and not b.pressed) and not self.CS.adaptive_Cruise:
-          self.CS.adaptive_Cruise = True
-          self.CS.enable_lkas = True
-          events.add(EventName.buttonEnable)
-        if (b.type == ButtonType.accelCruise and not b.pressed) and not self.CS.adaptive_Cruise:
-          self.CS.adaptive_Cruise = True
-          self.CS.enable_lkas = False
-          events.add(EventName.buttonEnable)
-        if (b.type == ButtonType.cancel and b.pressed) and self.CS.adaptive_Cruise:
-          self.CS.adaptive_Cruise = False
-          self.CS.enable_lkas = True
-          events.add(EventName.buttonCancel)
-    elif self.CS.main_on:
-      self.CS.adaptive_Cruise = False
-      self.CS.enable_lkas = True
+    if self.CP.enableGasInterceptor:
+      if not self.CS.main_on : #lat dis-engage
+        for b in ret.buttonEvents:
+          if (b.type == ButtonType.decelCruise and not b.pressed) and not self.CS.adaptive_Cruise:
+            self.CS.adaptive_Cruise = True
+            self.CS.enable_lkas = True
+            events.add(EventName.buttonEnable)
+            break
+          if (b.type == ButtonType.accelCruise and not b.pressed) and not self.CS.adaptive_Cruise:
+            self.CS.adaptive_Cruise = True
+            self.CS.enable_lkas = False
+            events.add(EventName.buttonEnable)
+            break
+          if (b.type == ButtonType.cancel and b.pressed) and self.CS.adaptive_Cruise:
+            self.CS.adaptive_Cruise = False
+            self.CS.enable_lkas = False
+            events.add(EventName.buttonCancel)
+            break
+          if (b.type == ButtonType.altButton3 and b.pressed) : #and self.CS.adaptive_Cruise
+            self.CS.adaptive_Cruise = False
+            self.CS.enable_lkas = True
+            break
+      else :#lat engage
+        for b in ret.buttonEvents:
+          if not self.CS.adaptive_Cruise and (b.type == ButtonType.altButton3 and b.pressed) : #and self.CS.adaptive_Cruise
+            self.CS.adaptive_Cruise = False
+            self.CS.enable_lkas = False
+            break
+
+    else :
+      if self.CS.main_on: #wihtout pedal case
+        self.CS.adaptive_Cruise = False
+        self.CS.enable_lkas = True
+      else:
+        self.CS.adaptive_Cruise = False
+        self.CS.enable_lkas = False
 
     #Added by jc01rho inspired by JangPoo
     # if self.CS.main_on  and ret.cruiseState.enabled and ret.gearShifter == GearShifter.drive and ret.vEgo > 2 and not ret.brakePressed :
