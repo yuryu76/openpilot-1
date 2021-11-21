@@ -18,11 +18,11 @@ class CarInterface(CarInterfaceBase):
     #return params.ACCEL_MIN, params.ACCEL_MAX
     v_current_kph = current_speed * CV.MS_TO_KPH
     
-    gas_max_bp = [0., 30., 60., 90.]
-    gas_max_v = [0.8, 0.8, 0.8, 0.8]
+#    gas_max_bp = [0., 30., 60., 90.]
+#    gas_max_v = [0.6, 0.8, 0.8, 0.8]
     
-#    gas_max_bp = [0., 10., 25., 40., 60., 80., 100., 110.]
-#    gas_max_v = [0.5, 0.5, 0.55, 0.6, 0.7, 0.75, 0.7, 0.7]
+    gas_max_bp = [0., 10., 25., 40., 60., 80., 100., 110.]
+    gas_max_v = [0.45, 0.5, 0.55, 0.6, 0.67, 0.75, 0.7, 0.7]
 
     brake_max_bp = [0, 70., 130.]
     brake_max_v = [-4., -3., -2.1]
@@ -104,7 +104,7 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.kpV = [1.15, 1.1, 0.8, 0.68, 0.6, 0.55, 0.51, 0.48]
     
     ret.longitudinalTuning.kiBP = [0., 130. * CV.KPH_TO_MS]
-    ret.longitudinalTuning.kiV = [0.07, 0.04]
+    ret.longitudinalTuning.kiV = [0.08, 0.05]
     
     #ret.longitudinalTuning.kfBP = [15., 20., 25.]
     #ret.longitudinalTuning.kfV = [1., 0.5, 0.2]
@@ -217,23 +217,23 @@ class CarInterface(CarInterfaceBase):
         self.CS.enable_lkas = False
 
     #Added by jc01rho inspired by JangPoo
-    # if self.CS.main_on  and ret.cruiseState.enabled and ret.gearShifter == GearShifter.drive and ret.vEgo > 2 and not ret.brakePressed :
-    #   if ret.cruiseState.available and not ret.seatbeltUnlatched and not ret.espDisabled and self.flag_pcmEnable_able :
-    #
-    #     if self.flag_pcmEnable_initialSet == False :
-    #       self.initial_pcmEnable_counter = self.initial_pcmEnable_counter + 1
-    #       if self.initial_pcmEnable_counter > 750 :
-    #         events.add(EventName.pcmEnable)
-    #         self.flag_pcmEnable_initialSet = True
-    #         self.flag_pcmEnable_able = False
-    #         self.initial_pcmEnable_counter = 0
-    #     else :
-    #       events.add(EventName.pcmEnable)
-    #       self.flag_pcmEnable_able = False
-    #       # self.flag_pcmEnable_initialSet = True
-    #       # self.initial_pcmEnable_counter = 0
-    # else  :
-    #   self.flag_pcmEnable_able = True
+    if self.CS.main_on  and self.CS.enable_lkas and not self.CS.adaptive_Cruise and ret.cruiseState.enabled and ret.gearShifter == GearShifter.drive and ret.vEgo > 2 and not ret.brakePressed :
+      if ret.cruiseState.available and not ret.seatbeltUnlatched and not ret.espDisabled and self.flag_pcmEnable_able :
+
+        if self.flag_pcmEnable_initialSet == False :
+          self.initial_pcmEnable_counter = self.initial_pcmEnable_counter + 1
+          if self.initial_pcmEnable_counter > 750 :
+            events.add(EventName.pcmEnable)
+            self.flag_pcmEnable_initialSet = True
+            self.flag_pcmEnable_able = False
+            self.initial_pcmEnable_counter = 0
+        else :
+          events.add(EventName.pcmEnable)
+          self.flag_pcmEnable_able = False
+          # self.flag_pcmEnable_initialSet = True
+          # self.initial_pcmEnable_counter = 0
+    else  :
+      self.flag_pcmEnable_able = True
     ###
     ret.events = events.to_msg()
 

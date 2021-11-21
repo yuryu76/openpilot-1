@@ -8,7 +8,6 @@ from common.realtime import DT_CTRL
 
 LongCtrlState = car.CarControl.Actuators.LongControlState
 
-
 #STOPPING_EGO_SPEED = 2.0 replaced CP.vEgoStopping
 STOPPING_TARGET_SPEED_OFFSET = 0.01
 #STARTING_TARGET_SPEED = 1.0 replaced CP.vEgoStarting
@@ -48,6 +47,7 @@ def long_control_state_trans(CP, active, long_control_state, v_ego, v_target, v_
     elif long_control_state == LongCtrlState.stopping:
       if starting_condition:
         long_control_state = LongCtrlState.starting
+        
     elif long_control_state == LongCtrlState.starting:
       if stopping_condition:
         long_control_state = LongCtrlState.stopping
@@ -55,7 +55,6 @@ def long_control_state_trans(CP, active, long_control_state, v_ego, v_target, v_
         long_control_state = LongCtrlState.pid
 
   return long_control_state
-
 
 class LongControl():
   def __init__(self, CP):
@@ -95,9 +94,10 @@ class LongControl():
 
     # TODO: This check is not complete and needs to be enforced by MPC
     a_target = clip(a_target, ACCEL_MIN_ISO, ACCEL_MAX_ISO)
-
+    
     self.pid.neg_limit = accel_limits[0]
     self.pid.pos_limit = accel_limits[1]
+
     # Actuation limits
     # gas_max = interp(CS.vEgo, CP.gasMaxBP, CP.gasMaxV)
     # brake_max = interp(CS.vEgo, CP.brakeMaxBP, CP.brakeMaxV)
@@ -112,6 +112,7 @@ class LongControl():
     v_ego_pid = max(CS.vEgo, 0.)  # Without this we get jumps, CAN bus reports 0 when speed < 0.3
 
     if self.long_control_state == LongCtrlState.off or not CS.adaptiveCruise : #or CS.gasPressed:
+#    if self.long_control_state == LongCtrlState.off or CS.gasPressed:
       self.reset(v_ego_pid)
       output_accel = 0.
 
@@ -126,8 +127,6 @@ class LongControl():
     # tracking objects and driving
     elif self.long_control_state == LongCtrlState.pid:
       self.v_pid = v_target
-      self.pid.neg_limit = accel_limits[0]
-      self.pid.pos_limit = accel_limits[1]
 
       # Toyota starts braking more when it thinks you want to stop
       # Freeze the integrator so we don't accelerate to compensate, and don't allow positive acceleration
@@ -144,7 +143,7 @@ class LongControl():
     elif self.long_control_state == LongCtrlState.stopping:
       # Keep applying brakes until the car is stopped
       if not CS.standstill or output_accel > CP.stopAccel:
-        output_accel -= CP.stoppingDecelRate * DT_CTRL
+        output_accel -= CP.stoppingDecelRate * DT_CTRL * interp(output_accel, [CP.stopAccel, 0], [1., 0.7])
       output_accel = clip(output_accel, accel_limits[0], accel_limits[1])
 
       self.reset(CS.vEgo)
