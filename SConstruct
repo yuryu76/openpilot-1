@@ -8,14 +8,16 @@ import numpy as np
 
 TICI = os.path.isfile('/TICI')
 Decider('MD5-timestamp')
+SetOption('num_jobs', 4)
+CacheDir('/data/build_cache')
 
 AddOption('--test',
           action='store_true',
           help='build test files')
 
-AddOption('--extras',
+AddOption('--setup',
           action='store_true',
-          help='build misc extras, like setup and installer files')
+          help='build setup and installer files')
 
 AddOption('--kaitai',
           action='store_true',
@@ -68,7 +70,6 @@ lenv = {
   "PYTHONPATH": Dir("#").abspath + ":" + Dir("#pyextra/").abspath,
 
   "ACADOS_SOURCE_DIR": Dir("#third_party/acados/acados").abspath,
-  "ACADOS_PYTHON_INTERFACE_PATH": Dir("#pyextra/acados_template").abspath,
   "TERA_PATH": Dir("#").abspath + f"/third_party/acados/{arch}/t_renderer",
 }
 
@@ -180,16 +181,13 @@ env = Environment(
     "-g",
     "-fPIC",
     "-O2",
-    "-Wunused",
     "-Werror",
-    "-Wshadow",
     "-Wno-unknown-warning-option",
     "-Wno-deprecated-register",
     "-Wno-register",
     "-Wno-inconsistent-missing-override",
     "-Wno-c99-designator",
     "-Wno-reorder-init-list",
-    "-Wno-error=unused-but-set-variable",
   ] + cflags + ccflags,
 
   CPPPATH=cpppath + [
@@ -241,9 +239,9 @@ if GetOption('compile_db'):
   env.CompilationDatabase('compile_commands.json')
 
 # Setup cache dir
-cache_dir = '/data/scons_cache' if TICI else '/tmp/scons_cache'
-CacheDir(cache_dir)
-Clean(["."], cache_dir)
+#cache_dir = '/data/scons_cache' if TICI else '/tmp/scons_cache'
+#CacheDir(cache_dir)
+#Clean(["."], cache_dir)
 
 node_interval = 5
 node_count = 0
@@ -270,7 +268,7 @@ def abspath(x):
 py_include = sysconfig.get_paths()['include']
 envCython = env.Clone()
 envCython["CPPPATH"] += [py_include, np.get_include()]
-envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
+envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-deprecated-declarations"]
 
 envCython["LIBS"] = []
 if arch == "Darwin":
@@ -431,9 +429,6 @@ SConscript(['selfdrive/ui/SConscript'])
 
 if arch != "Darwin":
   SConscript(['selfdrive/logcatd/SConscript'])
-
-if GetOption('test'):
-  SConscript('panda/tests/safety/SConscript')
 
 external_sconscript = GetOption('external_sconscript')
 if external_sconscript:
