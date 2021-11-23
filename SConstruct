@@ -12,9 +12,6 @@ Decider('MD5-timestamp')
 AddOption('--test',
           action='store_true',
           help='build test files')
-AddOption('--setup',
-          action='store_true',
-          help='build setup and installer files')
 
 AddOption('--extras',
           action='store_true',
