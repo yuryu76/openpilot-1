@@ -151,6 +151,30 @@ static void ui_draw_world(UIState *s) {
   nvgResetScissor(s->vg);
 }
 
+static void ui_draw_latlong(UIState *s) {
+  //sm["carState"].getCarState().getBrakeLights();
+  auto carState = (*s->sm)["carState"].getCarState();
+  auto lkasEnabled = carState.getLkasEnable();
+  auto adaptiveCruise = carState.getAdaptiveCruise();
+
+  int w = 160;
+  int h = 80;
+  int x = (s->fb_w + (bdr_s*2))/2 - w/2 - bdr_s;
+  int y = 40 - bdr_s;
+
+//  const char* img = activeNDA == 1 ? "img_nda" : "img_hda";
+//  ui_draw_image(s, {x, y, w, h}, img, 1.f);
+
+  if (lkasEnabled) {
+    ui_draw_image(s, {x-w, y, w, h}, "lat_img", 1.f);
+  }
+  if(adaptiveCruise) {
+    ui_draw_image(s, {x+w, y, w, h}, "long_img", 1.f);
+  }
+
+
+}
+
 static void ui_draw_vision_maxspeed(UIState *s) {
   const int SET_SPEED_NA = 255;
   float maxspeed = (*s->sm)["controlsState"].getControlsState().getVCruise();
@@ -192,14 +216,14 @@ static void ui_draw_vision_event(UIState *s) {
 }
 
 static void ui_draw_vision_face(UIState *s) {
-  const int radius = 96;
+  const int radius = 72;
   const int center_x = radius + (bdr_s * 2);
   const int center_y = s->fb_h - footer_h / 2;
   ui_draw_circle_image(s, center_x, center_y, radius, "driver_face", s->scene.dm_active);
 }
 
 static void ui_draw_vision_brake(UIState *s) {
-  const int brake_size = 96;
+  const int brake_size = 72;
   const int brake_x = brake_size + (bdr_s * 2) + 255;
   const int brake_y = s->fb_h - footer_h / 2;
   ui_draw_circle_image(s, brake_x, brake_y, brake_size, "brake_img", s->scene.brakeLights);
@@ -212,6 +236,7 @@ static void ui_draw_vision_header(UIState *s) {
   ui_draw_vision_maxspeed(s);
   ui_draw_vision_speed(s);
   ui_draw_vision_event(s);
+  ui_draw_latlong(s);
 }
 
 
@@ -565,6 +590,9 @@ void ui_nvg_init(UIState *s) {
     {"wheel", "../assets/img_chffr_wheel.png"},
     {"driver_face", "../assets/img_driver_face.png"},
     {"brake_img", "../assets/img_brake_disc.png"},
+    {"lat_img", "../assets/img_lat.png"},
+    {"long_img", "../assets/img_long.png"},
+
   };
   for (auto [name, file] : images) {
     s->images[name] = nvgCreateImage(s->vg, file, 1);
