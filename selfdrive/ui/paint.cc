@@ -166,7 +166,13 @@ static void ui_draw_latlong(UIState *s) {
 //  ui_draw_image(s, {x, y, w, h}, img, 1.f);
 
   if (lkasEnabled) {
-    ui_draw_image(s, {x-w, y, w, h}, "img_lat", 1.f);
+//    ui_draw_image(s, {x-w, y, w, h}, "lat_img", 1.f);
+
+    const int image_circle_size = 36;
+//    const int brake_x = brake_size + (bdr_s * 2) + 255;
+//    const int brake_y = s->fb_h - footer_h / 2;
+    ui_draw_circle_image(s, x-w, y, image_circle_size, "lat_icon_img", 1.f);
+
   }
   if(adaptiveCruise) {
     ui_draw_image(s, {x+w, y, w, h}, "img_long", 1.f);
@@ -584,6 +590,7 @@ void ui_nvg_init(UIState *s) {
     {"driver_face", "../assets/img_driver_face.png"},
     {"brake_img", "../assets/img_brake_disc.png"},
     {"lat_img", "../assets/img_lat.png"},
+    {"lat_icon_img", "../assets/img_lat_icon.png"},
     {"long_img", "../assets/img_long.png"},
 
   };
