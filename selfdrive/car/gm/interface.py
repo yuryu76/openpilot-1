@@ -101,7 +101,7 @@ class CarInterface(CarInterfaceBase):
     #ret.longitudinalTuning.kpBP = [0., 30.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 90.*CV.KPH_TO_MS]
     #ret.longitudinalTuning.kpV = [1.15, 1.1, 0.9, 0.43]
     ret.longitudinalTuning.kpBP = [0., 10.*CV.KPH_TO_MS, 25.*CV.KPH_TO_MS, 40.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 80.*CV.KPH_TO_MS, 100.*CV.KPH_TO_MS, 110.*CV.KPH_TO_MS]
-    ret.longitudinalTuning.kpV = [1.15, 1.05, 0.81, 0.68, 0.6, 0.55, 0.51, 0.48]
+    ret.longitudinalTuning.kpV = [1.25, 1.10, 0.81, 0.60, 0.57, 0.54, 0.51, 0.48]
     
     ret.longitudinalTuning.kiBP = [0., 130. * CV.KPH_TO_MS]
     ret.longitudinalTuning.kiV = [0.075, 0.05]
@@ -113,15 +113,12 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.deadzoneV = [0., 0.15]
     # ret.longitudinalActuatorDelay = 0.2
     ret.longitudinalActuatorDelayLowerBound = 0.15
-    ret.longitudinalActuatorDelayUpperBound = 0.3
-    #선행차가 감속할 때 pid에서 stopping 단계로 바뀝니다. 숫자가 작으면, 즉 앞차감속이 조금만 일어나도 감속에 들어갈 수 있습니다. 무조건 민감한건 아니고 다른조건들과 곁들여서,,
-    #starting 단계에서 이 수치까지 초당 startingAccelRate 만큼 가속도를 올립니다. 이 수치가 넘으면 pid 상태로 넘깁니다. 현재 콤마 기본값이 -0.8이니 오파가 시작되는 순간 곧바로 이 값에 도달할듯함.
-    #선행차의 속도가 이 수치보다 커야 stopping에서 starting으로 변합니다.
+    ret.longitudinalActuatorDelayUpperBound = 0.2
     
     ret.startAccel = -0.8
     ret.stopAccel = -0.5
-    ret.startingAccelRate = 0.5
-    ret.stoppingDecelRate = 2.0
+    ret.startingAccelRate = 1.0
+    ret.stoppingDecelRate = 0.5
     ret.vEgoStopping = 0.6
     ret.vEgoStarting = 0.5
     ret.stoppingControl = True
