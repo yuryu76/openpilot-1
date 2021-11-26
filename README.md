@@ -9,7 +9,7 @@
 - 블랙순정판다, Lepro, 볼트EV 2019 프리미터 세이프티 차량에서 공기압 계기판 기준 250으로  타고있습니다.
 - lat_icon_image, special thanks to @Hammie K 
 
-##문의사항은 오카방 혹은 이슈 생성으로 주십시오. 감사합니다.
+## 문의사항은 오카방 혹은 이슈 생성으로 주십시오. 감사합니다.
 
 rkjnice@gmail.com
 
