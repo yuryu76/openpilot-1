@@ -8,10 +8,7 @@ from common.realtime import DT_CTRL
 
 LongCtrlState = car.CarControl.Actuators.LongControlState
 
-#STOPPING_EGO_SPEED = 2.0 replaced CP.vEgoStopping
-STOPPING_TARGET_SPEED_OFFSET = 0.01
-#STARTING_TARGET_SPEED = 1.0 replaced CP.vEgoStarting
-#BRAKE_THRESHOLD_TO_PID = 0.2
+STOPPING_TARGET_SPEED_OFFSET = 1.0
 REGEN_THRESHOLD = 0.02
 #BRAKE_STOPPING_TARGET = 0.5  # apply at least this amount of brake to maintain the vehicle stationary, replaced CP.stopAccel
 RATE = 100.0
@@ -108,10 +105,7 @@ class LongControl():
                                                        v_target_future, self.v_pid, output_accel,
                                                        CS.brakePressed, CS.cruiseState.standstill, CP.minSpeedCan)
 
-    #v_ego_pid = max(CS.vEgo, CP.minSpeedCan)  # Without this we get jumps, CAN bus reports 0 when speed < 0.3
-    # v_ego_pid = max(CS.vEgo, 0.)  # Without this we get jumps, CAN bus reports 0 when speed < 0.3
-
-    if self.long_control_state == LongCtrlState.off or not CS.adaptiveCruise : #or CS.gasPressed:
+    if self.long_control_state == LongCtrlState.off or not CS.adaptiveCruise:
       self.reset(CS.vEgo)
       output_accel = 0.
 
@@ -120,8 +114,8 @@ class LongControl():
       output_accel = REGEN_THRESHOLD
 
     elif CS.gasPressed:
-      self.reset(CS.vEgo)
-      output_accel = REGEN_THRESHOLD
+      self.reset(v_ego_pid)
+      output_accel = 0.1
 
     # tracking objects and driving
     elif self.long_control_state == LongCtrlState.pid:
@@ -142,7 +136,7 @@ class LongControl():
     elif self.long_control_state == LongCtrlState.stopping:
       # Keep applying brakes until the car is stopped
       if not CS.standstill or output_accel > CP.stopAccel:
-        output_accel -= CP.stoppingDecelRate * DT_CTRL * interp(output_accel, [CP.stopAccel, 0], [1., 0.7])
+        output_accel -= CP.stoppingDecelRate * DT_CTRL
       output_accel = clip(output_accel, accel_limits[0], accel_limits[1])
 
       self.reset(CS.vEgo)
