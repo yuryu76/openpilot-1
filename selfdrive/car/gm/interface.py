@@ -220,8 +220,8 @@ class CarInterface(CarInterfaceBase):
         if self.flag_pcmEnable_initialSet == False :
           self.initial_pcmEnable_counter = self.initial_pcmEnable_counter + 1
           if self.initial_pcmEnable_counter > 750 :
-            events.add(EventName.pcmEnable)
-            self.flag_pcmEnable_initialSet = True
+            # events.add(EventName.pcmEnable)
+            # self.flag_pcmEnable_initialSet = True
             self.flag_pcmEnable_able = False
             self.initial_pcmEnable_counter = 0
         else :
