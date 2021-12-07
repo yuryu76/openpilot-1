@@ -330,6 +330,12 @@ QWidget * community_panel(QWidget * parent) {
                                             "../assets/offroad/icon_checkmark.png"
                                             ));
 
+  toggles_list->addWidget(new ParamControl("ShowDebugUI",
+                                            "Show debug UI",
+                                            "디버깅 정보 표시",
+                                            "../assets/offroad/icon_checkmark.png"
+                                            ));
+
 //  toggles_list->addWidget(horizontal_line());
 //  toggles_list->addWidget(new LQRSelection());
 //  toggles_list->addWidget(horizontal_line());
