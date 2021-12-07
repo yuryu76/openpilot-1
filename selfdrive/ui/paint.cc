@@ -422,29 +422,6 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
     nvgStroke(s->vg);
 }
 
-static void bb_ui_draw_UI(UIState *s) {
-  //const UIScene *scene = &s->scene;
-  const int bb_dml_w = 180;
-  const int bb_dml_x = (bdr_s * 2);
-  const int bb_dml_y = (bdr_s * 1.5) + 220;
-
-  bb_ui_draw_measures_left(s, bb_dml_x, bb_dml_y, bb_dml_w);
-}
-
-static void ui_draw_vision(UIState *s) {
-  const UIScene *scene = &s->scene;
-  // Draw augmented elements
-  if (scene->world_objects_visible) {
-    ui_draw_world(s);
-  }
-  // Set Speed, Current Speed, Status/Events
-  ui_draw_vision_header(s);
-  if ((*s->sm)["controlsState"].getControlsState().getAlertSize() == cereal::ControlsState::AlertSize::NONE) {
-    ui_draw_vision_face(s);
-    	ui_draw_vision_brake(s);
-	bb_ui_draw_UI(s);
-  }
-}
 
 static void bb_ui_draw_debug(UIState *s) {
   const UIScene *scene = &s->scene;
@@ -531,6 +508,42 @@ static void bb_ui_draw_debug(UIState *s) {
   snprintf(str, sizeof(str), "Lead: %.1f/%.1f/%.1f", radar_dist, vision_dist, (radar_dist - vision_dist));
   ui_draw_text(s, text_x, y, str, 22 * 2.5, textColor, "sans-regular");*/
 }
+
+
+
+
+
+static void bb_ui_draw_UI(UIState *s) {
+  //const UIScene *scene = &s->scene;
+  const int bb_dml_w = 180;
+  const int bb_dml_x = (bdr_s * 2);
+  const int bb_dml_y = (bdr_s * 1.5) + 220;
+
+  bb_ui_draw_measures_left(s, bb_dml_x, bb_dml_y, bb_dml_w);
+  if(s->show_debug_ui)
+  {
+    bb_ui_draw_debug(s);
+  }
+
+}
+
+static void ui_draw_vision(UIState *s) {
+  const UIScene *scene = &s->scene;
+  // Draw augmented elements
+  if (scene->world_objects_visible) {
+    ui_draw_world(s);
+  }
+  // Set Speed, Current Speed, Status/Events
+  ui_draw_vision_header(s);
+  if ((*s->sm)["controlsState"].getControlsState().getAlertSize() == cereal::ControlsState::AlertSize::NONE) {
+    ui_draw_vision_face(s);
+    	ui_draw_vision_brake(s);
+	bb_ui_draw_UI(s);
+  }
+}
+
+
+
 
 void ui_draw(UIState *s, int w, int h) {
   // Update intrinsics matrix after possible wide camera toggle change
