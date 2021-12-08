@@ -69,6 +69,7 @@ class CarState(CarStateBase):
 
     self.park_brake = pt_cp.vl["EPBStatus"]["EPBClosed"]
     self.main_on = bool(pt_cp.vl["ECMEngineStatus"]["CruiseMainOn"])
+    ret.mainOn = self.main_on
     ret.espDisabled = pt_cp.vl["ESPStatus"]["TractionControlOn"] != 1
     self.pcm_acc_status = pt_cp.vl["AcceleratorPedal2"]["CruiseState"]
     ret.cruiseState.available = self.pcm_acc_status != 0
