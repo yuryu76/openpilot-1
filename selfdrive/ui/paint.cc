@@ -154,7 +154,7 @@ static void ui_draw_world(UIState *s) {
 static void ui_draw_latlong(UIState *s) {
   //sm["carState"].getCarState().getBrakeLights();
   auto carState = (*s->sm)["carState"].getCarState();
-  auto lkasEnabled = carState.getLkasEnable();
+  auto lkasEnabled = carState.getMainOn();
   auto adaptiveCruise = carState.getAdaptiveCruise();
 
   int w = 120;
@@ -171,7 +171,7 @@ static void ui_draw_latlong(UIState *s) {
     const int image_circle_size = 80;
 //    const int brake_x = brake_size + (bdr_s * 2) + 255;
 //    const int brake_y = s->fb_h - footer_h / 2;
-    ui_draw_circle_image(s, x-w, y+image_circle_size+16, image_circle_size, "lat_icon_img", 1.f);
+    ui_draw_circle_image(s, x-w, y+image_circle_size+24, image_circle_size, "lat_icon_img", 1.f);
 
   }
   if(adaptiveCruise) {
@@ -230,7 +230,7 @@ static void ui_draw_vision_face(UIState *s) {
 
 static void ui_draw_vision_brake(UIState *s) {
   const int brake_size = 72;
-  const int brake_x = brake_size + (bdr_s * 2) + 255;
+  const int brake_x = brake_size + (bdr_s * 2) + 160;
   const int brake_y = s->fb_h - footer_h / 2;
   ui_draw_circle_image(s, brake_x, brake_y, brake_size, "brake_img", s->scene.brakeLights);
 }
