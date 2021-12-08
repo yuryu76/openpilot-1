@@ -359,8 +359,13 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
         value_fontSize, label_fontSize, uom_fontSize );
     bb_ry = bb_y + bb_h;
   }
+
+//    if(s->show_debug_ui)
+//  {
+//    bb_ui_draw_debug(s);
+//  }
   // add CPU temperature
-  if (UI_FEATURE_RIGHT_CPU_TEMP) {
+  if (s->show_cpu_temp) {
         char val_str[16];
     char uom_str[6];
     NVGcolor val_color = nvgRGBA(255, 255, 255, 200);
@@ -394,7 +399,7 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
 
   // add battery level
   #if defined(QCOM) || defined(QCOM2) //preprocessor level cut-off
-  if (Hardware::EON()) {
+  if (s->show_batt_level && Hardware::EON()) {
       float batteryTemp = (*s->sm)["deviceState"].getDeviceState().getAmbientTempC();
       bool batteryless =  batteryTemp < -20;
       if(UI_FEATURE_BATTERY_LEVEL && !batteryless) {
@@ -528,6 +533,8 @@ static void bb_ui_draw_UI(UIState *s) {
   {
     bb_ui_draw_debug(s);
   }
+
+
 
 }
 
