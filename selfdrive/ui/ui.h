@@ -158,7 +158,7 @@ typedef struct UIState {
   float car_space_transform[6];
   bool wide_camera;
 
-  bool show_debug_ui, custom_lead_mark;
+  bool show_debug_ui, custom_lead_mark, show_cpu_temp, show_batt_level;
 
 } UIState;
 
