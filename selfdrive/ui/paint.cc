@@ -207,6 +207,10 @@ static void ui_draw_vision_speed(UIState *s) {
   nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
   ui_draw_text(s, s->fb_w/2, 210, speed_str.c_str(), 96 * 2.5, COLOR_WHITE, "sans-bold");
   ui_draw_text(s, s->fb_w/2, 290, s->scene.is_metric ? "km/h" : "mph", 36 * 2.5, COLOR_WHITE_ALPHA(200), "sans-regular");
+
+  if ( (s->scene.is_metric && speed < 11.5 )  ||   (!s->scene.is_metric && speed < 7.145 ) ) {
+    ui_draw_text(s, s->fb_w/3, 290, "10 km/h 미만 : 조향안함", 36 * 2.5, COLOR_WHITE_ALPHA(200), "sans-regular");
+  } 
 }
 
 static void ui_draw_vision_event(UIState *s) {
