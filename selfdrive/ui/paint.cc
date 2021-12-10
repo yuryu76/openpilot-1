@@ -157,8 +157,8 @@ static void ui_draw_latlong(UIState *s) {
   auto lkasEnabled = carState.getMainOn();
   auto adaptiveCruise = carState.getAdaptiveCruise();
 
-  int w = 120;
-  int h = 54;
+  int w = 160;
+  int h = 80;
   int x = (s->fb_w + (bdr_s*2))/2 - w/2 - bdr_s;
   int y = 40 - bdr_s;
 
@@ -175,7 +175,7 @@ static void ui_draw_latlong(UIState *s) {
 
   }
   if(adaptiveCruise) {
-    ui_draw_image(s, {x+w, y, w, h}, "img_long", 1.f);
+    ui_draw_image(s, {x+w, y, w, h}, "long_img", 1.f);
   }
 
 
