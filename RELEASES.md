@@ -1,3 +1,10 @@
+Version 0.8.12 (2021-12-15)
+========================
+ * New alert sounds
+ * AGNOS 3
+ * Audi Q3 2020-21 support thanks to jyoung8607!
+ * Lexus RC 2020 support thanks to ErichMoraga!
+
 Version 0.8.11 (2021-11-29)
 ========================
  * Support for CAN FD on the red panda
