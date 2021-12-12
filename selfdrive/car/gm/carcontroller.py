@@ -9,7 +9,7 @@ from opendbc.can.packer import CANPacker
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
-VEL = [50*CV.KPH_TO_MS, 60*CV.KPH_TO_MS, 90*CV.KPH_TO_MS]  # velocities
+VEL = [13.889, 16.667, 25.]  # velocities
 MIN_PEDAL = [0.02, 0.05, 0.1]
 
 def accel_hysteresis(accel, accel_steady):
@@ -27,11 +27,12 @@ class CarController():
   def __init__(self, dbc_name, CP, VM):
     self.start_time = 0.
     self.apply_steer_last = 0
+    self.lka_steering_cmd_counter_last = -1
     self.lka_icon_status_last = (False, False)
     self.steer_rate_limited = False
+    
     self.accel_steady = 0.
-    #self.apply_pedal_last = 0.
-
+    
     self.params = CarControllerParams()
 
     self.packer_pt = CANPacker(DBC[CP.carFingerprint]['pt'])
@@ -46,9 +47,13 @@ class CarController():
     # Send CAN commands.
     can_sends = []
 
-    # STEER
-    lkas_enabled = enabled and not (CS.out.steerWarning or CS.out.steerError) and CS.out.vEgo > P.MIN_STEER_SPEED
-    if (frame % P.STEER_STEP) == 0:
+    # Steering (50Hz)
+    # Avoid GM EPS faults when transmitting messages too close together: skip this transmit if we just received the
+    # next Panda loopback confirmation in the current CS frame.
+    if CS.lka_steering_cmd_counter != self.lka_steering_cmd_counter_last:
+      self.lka_steering_cmd_counter_last = CS.lka_steering_cmd_counter
+    elif (frame % P.STEER_STEP) == 0:
+      lkas_enabled = enabled and not (CS.out.steerWarning or CS.out.steerError) and CS.out.vEgo > P.MIN_STEER_SPEED
       if lkas_enabled:
         new_steer = int(round(actuators.steer * P.STEER_MAX))
         apply_steer = apply_std_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, P)
@@ -57,28 +62,57 @@ class CarController():
         apply_steer = 0
 
       self.apply_steer_last = apply_steer
-      idx = (frame // P.STEER_STEP) % 4
+      # GM EPS faults on any gap in received message counters. To handle transient OP/Panda safety sync issues at the
+      # moment of disengaging, increment the counter based on the last message known to pass Panda safety checks.
+      idx = (CS.lka_steering_cmd_counter + 1) % 4
 
-      can_sends.append(gmcan.create_steering_control(self.packer_pt, CanBus.POWERTRAIN, apply_steer, idx, lkas_enabled))
+      can_sends.append(gmcan.create_steering_control(self.packer_pt, CanBus.POWERTRAIN, apply_steer, idx, lkas_enabled))   
+       
+    
+#    lkas_enabled = enabled and not (CS.out.steerWarning or CS.out.steerError) and CS.out.vEgo > P.MIN_STEER_SPEED
+#    if (frame % P.STEER_STEP) == 0:
+#      if lkas_enabled:
+#        new_steer = int(round(actuators.steer * P.STEER_MAX))
+#        apply_steer = apply_std_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, P)
+#        self.steer_rate_limited = new_steer != apply_steer
+#      else:
+#        apply_steer = 0
 
-    # Pedal/Regen
-    if CS.CP.enableGasInterceptor and (frame % 2) == 0:
+#      self.apply_steer_last = apply_steer
+#      idx = (frame // P.STEER_STEP) % 4
 
-      if not enabled or not CS.adaptive_Cruise:
-        final_pedal = 0
-      elif CS.adaptive_Cruise:
-        min_pedal_speed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
-        pedal_accel = actuators.accel / 4
-        pedal = clip(pedal_accel, min_pedal_speed, 1.)
-        regen = - pedal_accel
-        pedal, self.accel_steady = accel_hysteresis(pedal, self.accel_steady)
-        final_pedal = clip(pedal - regen, 0., 1.)
-        if regen > 0.1:
-          can_sends.append(gmcan.create_regen_paddle_command(self.packer_pt, CanBus.POWERTRAIN))
+#      can_sends.append(gmcan.create_steering_control(self.packer_pt, CanBus.POWERTRAIN, apply_steer, idx, lkas_enabled))
 
-        idx = (frame // 2) % 4
-        can_sends.append(create_gas_command(self.packer_pt, final_pedal, idx))
-      #self.apply_pedal_last = final_pedal
+    # Pedal/Regen  
+    if not enabled or not CS.adaptive_Cruise or not CS.CP.enableGasInterceptor:
+      comma_pedal = 0
+    elif CS.adaptive_Cruise:
+      min_pedal_speed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
+      comma_pedal = clip(actuators.accel, min_pedal_speed, 1.)
+#      comma_pedal = clip(actuators.accel, 0., 1.)
+
+    if (frame % 4) == 0:
+      idx = (frame // 4) % 4
+
+      can_sends.append(create_gas_command(self.packer_pt, comma_pedal, idx))
+      
+      
+##페달에 accel, brake 개념 적용시      
+#    if CS.CP.enableGasInterceptor and (frame % 2) == 0:
+#      if not enabled or not CS.adaptive_Cruise:
+#        final_pedal = 0
+#      elif CS.adaptive_Cruise:
+#        min_pedal_speed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
+#        pedal_accel = actuators.accel / 4
+#        pedal = clip(pedal_accel, min_pedal_speed, 1.)
+#        regen = - pedal_accel
+#        pedal, self.accel_steady = accel_hysteresis(pedal, self.accel_steady)
+#        final_pedal = clip(pedal - regen, 0., 1.)
+#        if regen > 0.1:
+#          can_sends.append(gmcan.create_regen_paddle_command(self.packer_pt, CanBus.POWERTRAIN))
+
+#        idx = (frame // 2) % 4
+#        can_sends.append(create_gas_command(self.packer_pt, final_pedal, idx))
 
     # Send dashboard UI commands (ACC status), 25hz
     #if (frame % 4) == 0:
