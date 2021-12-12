@@ -72,13 +72,15 @@ class CarController():
       comma_pedal = 0
     elif CS.adaptive_Cruise:
       min_pedal_speed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
-      comma_pedal = clip(actuators.accel*0.33, min_pedal_speed, 1.)
+      comma_pedal = clip(actuators.accel, min_pedal_speed, 1.)
 #      comma_pedal = clip(actuators.accel, 0., 1.)
+
+      pedal, self.accel_steady = accel_hysteresis(comma_pedal, self.accel_steady)
 
     if (frame % 4) == 0:
       idx = (frame // 4) % 4
 
-      can_sends.append(create_gas_command(self.packer_pt, comma_pedal, idx))
+      can_sends.append(create_gas_command(self.packer_pt, pedal, idx))
       
       
 ##페달에 accel, brake 개념 적용시      
