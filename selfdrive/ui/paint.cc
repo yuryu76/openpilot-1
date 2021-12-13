@@ -166,7 +166,7 @@ static void ui_draw_latlong(UIState *s) {
 //  const char* img = activeNDA == 1 ? "img_nda" : "img_hda";
 //  ui_draw_image(s, {x, y, w, h}, img, 1.f);
 
-  if (lkasEnabled || mainOn ) {
+  if ( (adaptiveCruise && lkasEnabled) || mainOn ) {
 //    ui_draw_image(s, {x-w, y, w, h}, "lat_img", 1.f);
 
     const int image_circle_size = 80;
