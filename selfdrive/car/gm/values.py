@@ -22,24 +22,24 @@ class CarControllerParams():
     self.CAMERA_KEEPALIVE_STEP = 100
 
     # pedal lookups, only for Volt
-    MAX_GAS = 3072              # Only a safety limit
-    ZERO_GAS = 2048
-    MAX_BRAKE = 350             # Should be around 3.5m/s^2, including regen
+    self.MAX_GAS = 3072              # Only a safety limit
+    self.ZERO_GAS = 2048
+    self.MAX_BRAKE = 350             # Should be around 3.5m/s^2, including regen
 
     # Allow small margin below -3.5 m/s^2 from ISO 15622:2018 since we
     # perform the closed loop control, and might need some
 
     # Our controller should still keep the 2 second average above
     # -3.5 m/s^2 as per planner limits
-    self.ACCEL_MAX = 2.
+    self.ACCEL_MAX = 2.0
     self.ACCEL_MIN = -4.0
     self.ACCEL_SCALE = 4.0  # max(ACCEL_MAX, -ACCEL_MIN)
 
     self.MAX_ACC_REGEN = 1404  # ACC Regen braking is slightly less powerful than max regen paddle
     self.GAS_LOOKUP_BP = [-1, 0., self.ACCEL_MAX]
-    self.GAS_LOOKUP_V = [self.MAX_ACC_REGEN, ZERO_GAS, MAX_GAS]
-    self.BRAKE_LOOKUP_BP = [self.ACCEL_MIN, -0.1]
-    self.BRAKE_LOOKUP_V = [MAX_BRAKE, 0]
+    self.GAS_LOOKUP_V = [self.MAX_ACC_REGEN, self.ZERO_GAS, self.MAX_GAS]
+    self.BRAKE_LOOKUP_BP = [self.ACCEL_MIN, -1.]
+    self.BRAKE_LOOKUP_V = [self.MAX_BRAKE, 0]
     self.ACCEL_HYST_GAP = 0.02
 
 STEER_THRESHOLD = 1.0
