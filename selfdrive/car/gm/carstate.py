@@ -5,7 +5,7 @@ from opendbc.can.parser import CANParser
 from selfdrive.car.interfaces import CarStateBase
 from selfdrive.car.gm.values import DBC, CAR, AccState, CanBus, \
                                     CruiseButtons, STEER_THRESHOLD
-
+from selfdrive.config import Conversions as CV
 
 class CarState(CarStateBase):
   def __init__(self, CP):
