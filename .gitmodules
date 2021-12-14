@@ -1,0 +1,3 @@
+[submodule "panda"]
+	path = panda
+	url = git@github.com:jc01rho-openpilot-BoltEV2019-KoKr/panda.git
