@@ -299,7 +299,7 @@ struct DeviceState @0xa4d8b5af2aa492eb {
   memoryUsagePercent @19 :Int8;
   gpuUsagePercent @33 :Int8;
   cpuUsagePercent @34 :List(Int8);  # per-core cpu usage
-  wifiIpAddress @38 :Text;
+  wifiIpAddress @41 :Text;
 
   # power
   batteryPercent @8 :Int16;
