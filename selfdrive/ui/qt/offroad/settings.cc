@@ -322,6 +322,21 @@ void C2NetworkPanel::showEvent(QShowEvent *event) {
   ipaddress->setText(getIPAddress());
 }
 
+QString C2NetworkPanel::getIPAddress() {
+  std::string result = util::check_output("ifconfig wlan0");
+  if (result.empty()) return "";
+
+  const std::string inetaddrr = "inet addr:";
+  std::string::size_type begin = result.find(inetaddrr);
+  if (begin == std::string::npos) return "";
+
+  begin += inetaddrr.length();
+  std::string::size_type end = result.find(' ', begin);
+  if (end == std::string::npos) return "";
+
+  return result.substr(begin, end - begin).c_str();
+}
+
 
 
 void SettingsWindow::showEvent(QShowEvent *event) {
