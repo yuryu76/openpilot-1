@@ -116,14 +116,14 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   connect(dcamBtn, &ButtonControl::clicked, [=]() { emit showDriverView(); });
   addItem(dcamBtn);
 
-//  auto resetCalibBtn = new ButtonControl("Reset Calibration", "RESET", " ");
-//  connect(resetCalibBtn, &ButtonControl::showDescription, this, &DevicePanel::updateCalibDescription);
-//  connect(resetCalibBtn, &ButtonControl::clicked, [&]() {
-//    if (ConfirmationDialog::confirm("Are you sure you want to reset calibration?", this)) {
-//      params.remove("CalibrationParams");
-//    }
-//  });
-//  addItem(resetCalibBtn);
+  auto resetCalibBtn = new ButtonControl("Reset Calibration", "RESET", " ");
+  connect(resetCalibBtn, &ButtonControl::showDescription, this, &DevicePanel::updateCalibDescription);
+  connect(resetCalibBtn, &ButtonControl::clicked, [&]() {
+    if (ConfirmationDialog::confirm("Are you sure you want to reset calibration?", this)) {
+      params.remove("CalibrationParams");
+    }
+  });
+  addItem(resetCalibBtn);
 
   if (!params.getBool("Passive")) {
     auto retrainingBtn = new ButtonControl("Review Training Guide", "REVIEW", "Review the rules, features, and limitations of openpilot");
@@ -153,16 +153,16 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   // power buttons
   QHBoxLayout *power_layout = new QHBoxLayout();
   power_layout->setSpacing(30);
-//
-//  QPushButton *reboot_btn = new QPushButton("Reboot");
-//  reboot_btn->setObjectName("reboot_btn");
-//  power_layout->addWidget(reboot_btn);
-//  QObject::connect(reboot_btn, &QPushButton::clicked, this, &DevicePanel::reboot);
-//
-//  QPushButton *poweroff_btn = new QPushButton("Power Off");
-//  poweroff_btn->setObjectName("poweroff_btn");
-//  power_layout->addWidget(poweroff_btn);
-//  QObject::connect(poweroff_btn, &QPushButton::clicked, this, &DevicePanel::poweroff);
+
+  QPushButton *reboot_btn = new QPushButton("Reboot");
+  reboot_btn->setObjectName("reboot_btn");
+  power_layout->addWidget(reboot_btn);
+  QObject::connect(reboot_btn, &QPushButton::clicked, this, &DevicePanel::reboot);
+
+  QPushButton *poweroff_btn = new QPushButton("Power Off");
+  poweroff_btn->setObjectName("poweroff_btn");
+  power_layout->addWidget(poweroff_btn);
+  QObject::connect(poweroff_btn, &QPushButton::clicked, this, &DevicePanel::poweroff);
 
   setStyleSheet(R"(
     #reboot_btn { height: 120px; border-radius: 15px; background-color: #393939; }
@@ -172,6 +172,59 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   )");
   addItem(power_layout);
 }
+
+
+void DevicePanel::updateCalibDescription() {
+  QString desc =
+      "openpilot requires the device to be mounted within 4° left or right and "
+      "within 5° up or down. openpilot is continuously calibrating, resetting is rarely required.";
+  std::string calib_bytes = Params().get("CalibrationParams");
+  if (!calib_bytes.empty()) {
+    try {
+      AlignedBuffer aligned_buf;
+      capnp::FlatArrayMessageReader cmsg(aligned_buf.align(calib_bytes.data(), calib_bytes.size()));
+      auto calib = cmsg.getRoot<cereal::Event>().getLiveCalibration();
+      if (calib.getCalStatus() != 0) {
+        double pitch = calib.getRpyCalib()[1] * (180 / M_PI);
+        double yaw = calib.getRpyCalib()[2] * (180 / M_PI);
+        desc += QString(" Your device is pointed %1° %2 and %3° %4.")
+                    .arg(QString::number(std::abs(pitch), 'g', 1), pitch > 0 ? "up" : "down",
+                         QString::number(std::abs(yaw), 'g', 1), yaw > 0 ? "right" : "left");
+      }
+    } catch (kj::Exception) {
+      qInfo() << "invalid CalibrationParams";
+    }
+  }
+  qobject_cast<ButtonControl *>(sender())->setDescription(desc);
+}
+
+void DevicePanel::reboot() {
+  if (QUIState::ui_state.status == UIStatus::STATUS_DISENGAGED) {
+    if (ConfirmationDialog::confirm("Are you sure you want to reboot?", this)) {
+      // Check engaged again in case it changed while the dialog was open
+      if (QUIState::ui_state.status == UIStatus::STATUS_DISENGAGED) {
+        Params().putBool("DoReboot", true);
+      }
+    }
+  } else {
+    ConfirmationDialog::alert("Disengage to Reboot", this);
+  }
+}
+
+void DevicePanel::poweroff() {
+  if (QUIState::ui_state.status == UIStatus::STATUS_DISENGAGED) {
+    if (ConfirmationDialog::confirm("Are you sure you want to power off?", this)) {
+      // Check engaged again in case it changed while the dialog was open
+      if (QUIState::ui_state.status == UIStatus::STATUS_DISENGAGED) {
+        Params().putBool("DoShutdown", true);
+      }
+    }
+  } else {
+    ConfirmationDialog::alert("Disengage to Power Off", this);
+  }
+}
+
+
 
 SoftwarePanel::SoftwarePanel(QWidget* parent) : ListWidget(parent) {
   gitBranchLbl = new LabelControl("Git Branch");
