@@ -308,6 +308,7 @@ struct DeviceState @0xa4d8b5af2aa492eb {
   chargingDisabled @18 :Bool;
   offroadPowerUsageUwh @23 :UInt32;
   carBatteryCapacityUwh @25 :UInt32;
+  powerDrawW @40 :Float32;
 
   # device thermals
   cpuTempC @26 :List(Float32);
@@ -316,10 +317,17 @@ struct DeviceState @0xa4d8b5af2aa492eb {
   ambientTempC @30 :Float32;
   nvmeTempC @35 :List(Float32);
   modemTempC @36 :List(Float32);
+  pmicTempC @39 :List(Float32);
+  thermalZones @38 :List(ThermalZone);
   thermalStatus @14 :ThermalStatus;
 
   fanSpeedPercentDesired @10 :UInt16;
   screenBrightnessPercent @37 :Int8;
+
+  struct ThermalZone {
+    name @0 :Text;
+    temp @1 :Float32;
+  }
 
   enum ThermalStatus {
     green @0;
@@ -604,6 +612,8 @@ struct ControlsState @0x97ff69c53601abf1 {
     delta @8 :Float32;
     output @9 :Float32;
     saturated @10 :Bool;
+    steeringAngleDesiredDeg @11 :Float32;
+    steeringRateDesiredDeg @12 :Float32;
   }
 
   struct LateralPIDState {
@@ -616,6 +626,7 @@ struct ControlsState @0x97ff69c53601abf1 {
     f @6 :Float32;
     output @7 :Float32;
     saturated @8 :Bool;
+    steeringAngleDesiredDeg @9 :Float32;
    }
 
   struct LateralLQRState {
@@ -625,6 +636,7 @@ struct ControlsState @0x97ff69c53601abf1 {
     output @3 :Float32;
     lqrOutput @4 :Float32;
     saturated @5 :Bool;
+    steeringAngleDesiredDeg @6 :Float32;
   }
 
   struct LateralAngleState {
@@ -632,6 +644,7 @@ struct ControlsState @0x97ff69c53601abf1 {
     steeringAngleDeg @1 :Float32;
     output @2 :Float32;
     saturated @3 :Bool;
+    steeringAngleDesiredDeg @4 :Float32;
   }
 
   struct LateralDebugState {
@@ -686,6 +699,7 @@ struct ModelDataV2 {
   orientation @5 :XYZTData;
   velocity @6 :XYZTData;
   orientationRate @7 :XYZTData;
+  acceleration @19 :XYZTData;
 
   # prediction lanelines and road edges
   laneLines @8 :List(XYZTData);
@@ -1290,6 +1304,7 @@ struct DriverMonitoringState @0xb83cda094a1da284 {
 struct Boot {
   wallTimeNanos @0 :UInt64;
   pstore @4 :Map(Text, Data);
+  commands @5 :Map(Text, Data);
   launchLog @3 :Text;
 
   lastKmsgDEPRECATED @1 :Data;
@@ -1377,6 +1392,44 @@ struct UploaderState {
   lastFilename @6 :Text;
 }
 
+struct NavInstruction {
+  maneuverPrimaryText @0 :Text;
+  maneuverSecondaryText @1 :Text;
+  maneuverDistance @2 :Float32;  # m
+  maneuverType @3 :Text; # TODO: Make Enum
+  maneuverModifier @4 :Text; # TODO: Make Enum
+
+  distanceRemaining @5 :Float32; # m
+  timeRemaining @6 :Float32; # s
+  timeRemainingTypical @7 :Float32; # s
+
+  lanes @8 :List(Lane);
+  showFull @9 :Bool;
+
+  struct Lane {
+    directions @0 :List(Direction);
+    active @1 :Bool;
+    activeDirection @2 :Direction;
+  }
+
+  enum Direction {
+    none @0;
+    left @1;
+    right @2;
+    straight @3;
+  }
+
+}
+
+struct NavRoute {
+  coordinates @0 :List(Coordinate);
+
+  struct Coordinate {
+    latitude @0 :Float32;
+    longitude @1 :Float32;
+  }
+}
+
 struct Event {
   logMonoTime @0 :UInt64;  # nanoseconds
   valid @67 :Bool = true;
@@ -1434,6 +1487,10 @@ struct Event {
     deviceState @6 :DeviceState;
     logMessage @18 :Text;
 
+    # navigation
+    navInstruction @82 :NavInstruction;
+    navRoute @83 :NavRoute;
+    navThumbnail @84: Thumbnail;
 
     # *********** debug ***********
     testJoystick @52 :Joystick;

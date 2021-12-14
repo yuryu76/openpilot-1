@@ -15,9 +15,9 @@ AddOption('--test',
           action='store_true',
           help='build test files')
 
-AddOption('--setup',
+AddOption('--extras',
           action='store_true',
-          help='build setup and installer files')
+          help='build misc extras, like setup and installer files')
 
 AddOption('--kaitai',
           action='store_true',
@@ -62,7 +62,6 @@ if arch == "aarch64" and TICI:
   arch = "larch64"
 
 USE_WEBCAM = os.getenv("USE_WEBCAM") is not None
-USE_FRAME_STREAM = os.getenv("USE_FRAME_STREAM") is not None
 
 lenv = {
   "PATH": os.environ['PATH'],
@@ -70,6 +69,7 @@ lenv = {
   "PYTHONPATH": Dir("#").abspath + ":" + Dir("#pyextra/").abspath,
 
   "ACADOS_SOURCE_DIR": Dir("#third_party/acados/acados").abspath,
+  "ACADOS_PYTHON_INTERFACE_PATH": Dir("#pyextra/acados_template").abspath,
   "TERA_PATH": Dir("#").abspath + f"/third_party/acados/{arch}/t_renderer",
 }
 
@@ -92,7 +92,6 @@ if arch == "aarch64" or arch == "larch64":
     "/usr/lib",
     "/system/vendor/lib64",
     "/system/comma/usr/lib",
-    "#third_party/nanovg",
     f"#third_party/acados/{arch}/lib",
   ]
 
@@ -182,12 +181,14 @@ env = Environment(
     "-fPIC",
     "-O2",
     "-Werror",
+    "-Wshadow",
     "-Wno-unknown-warning-option",
     "-Wno-deprecated-register",
     "-Wno-register",
     "-Wno-inconsistent-missing-override",
     "-Wno-c99-designator",
     "-Wno-reorder-init-list",
+    "-Wno-error=unused-but-set-variable",
   ] + cflags + ccflags,
 
   CPPPATH=cpppath + [
@@ -208,7 +209,6 @@ env = Environment(
     "#third_party/linux/include",
     "#third_party/snpe/include",
     "#third_party/mapbox-gl-native-qt/include",
-    "#third_party/nanovg",
     "#third_party/qrcode",
     "#third_party",
     "#cereal",
@@ -268,7 +268,7 @@ def abspath(x):
 py_include = sysconfig.get_paths()['include']
 envCython = env.Clone()
 envCython["CPPPATH"] += [py_include, np.get_include()]
-envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-deprecated-declarations"]
+envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
 
 envCython["LIBS"] = []
 if arch == "Darwin":
@@ -350,7 +350,7 @@ if GetOption("clazy"):
   qt_env['ENV']['CLAZY_IGNORE_DIRS'] = qt_dirs[0]
   qt_env['ENV']['CLAZY_CHECKS'] = ','.join(checks)
 
-Export('env', 'qt_env', 'arch', 'real_arch', 'SHARED', 'USE_WEBCAM', 'USE_FRAME_STREAM')
+Export('env', 'qt_env', 'arch', 'real_arch', 'SHARED', 'USE_WEBCAM')
 
 SConscript(['selfdrive/common/SConscript'])
 Import('_common', '_gpucommon', '_gpu_libs')
@@ -385,7 +385,7 @@ rednose_config = {
   },
 }
 
-if arch != "aarch64":
+if arch not in ["aarch64", "larch64"]:
   rednose_config['to_build'].update({
     'gnss': ('#selfdrive/locationd/models/gnss_kf.py', True, []),
     'loc_4': ('#selfdrive/locationd/models/loc_kf.py', True, []),
@@ -429,6 +429,9 @@ SConscript(['selfdrive/ui/SConscript'])
 
 if arch != "Darwin":
   SConscript(['selfdrive/logcatd/SConscript'])
+
+if GetOption('test'):
+  SConscript('panda/tests/safety/SConscript')
 
 external_sconscript = GetOption('external_sconscript')
 if external_sconscript:

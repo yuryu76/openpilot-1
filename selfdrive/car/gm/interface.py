@@ -14,33 +14,27 @@ EventName = car.CarEvent.EventName
 class CarInterface(CarInterfaceBase):
   @staticmethod
   def get_pid_accel_limits(CP, current_speed, cruise_speed):
-    #params = CarControllerParams()
-    #return params.ACCEL_MIN, params.ACCEL_MAX
-    v_current_kph = current_speed * CV.MS_TO_KPH
-    
-    gas_max_bp = [0.0, 5.0, 9.0, 35.0] #felger
-    gas_max_v =  [0.4, 0.5, 0.7, 0.7]
-    
-#    gas_max_bp = [0., 10., 25., 40., 60., 80., 100., 110.]
-#    gas_max_v = [0.5, 0.52, 0.55, 0.6, 0.67, 0.67, 0.67, 0.67]
+    params = CarControllerParams()
+    return params.ACCEL_MIN, params.ACCEL_MAX
 
-    brake_max_bp = [0, 70., 130.]
-    brake_max_v = [-4., -3., -2.1]
-
-    return interp(v_current_kph, brake_max_bp, brake_max_v), interp(v_current_kph, gas_max_bp, gas_max_v)
-
-  # Volt determined by iteratively plotting and minimizing error for f(angle, speed) = steer.
+  # Determined by iteratively plotting and minimizing error for f(angle, speed) = steer.
   @staticmethod
   def get_steer_feedforward_volt(desired_angle, v_ego):
-    # maps [-inf,inf] to [-1,1]: sigmoid(34.4 deg) = sigmoid(1) = 0.5
-    # 1 / 0.02904609 = 34.4 deg ~= 36 deg ~= 1/10 circle? Arbitrary?
     desired_angle *= 0.02904609
     sigmoid = desired_angle / (1 + fabs(desired_angle))
     return 0.10006696 * sigmoid * (v_ego + 3.12485927)
 
+  @staticmethod
+  def get_steer_feedforward_acadia(desired_angle, v_ego):
+    desired_angle *= 0.09760208
+    sigmoid = desired_angle / (1 + fabs(desired_angle))
+    return 0.04689655 * sigmoid * (v_ego + 10.028217)
+
   def get_steer_feedforward_function(self):
-    if self.CP.carFingerprint in [CAR.VOLT]:
+    if self.CP.carFingerprint == CAR.VOLT:
       return self.get_steer_feedforward_volt
+    elif self.CP.carFingerprint == CAR.ACADIA:
+      return self.get_steer_feedforward_acadia
     else:
       return CarInterfaceBase.get_steer_feedforward_default
 

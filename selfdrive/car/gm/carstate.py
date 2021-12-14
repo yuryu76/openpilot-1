@@ -1,6 +1,5 @@
 from cereal import car
 from common.numpy_fast import mean
-from selfdrive.config import Conversions as CV
 from opendbc.can.can_define import CANDefine
 from opendbc.can.parser import CANParser
 from selfdrive.car.interfaces import CarStateBase
@@ -15,6 +14,7 @@ class CarState(CarStateBase):
     self.shifter_values = can_define.dv["ECMPRDNL"]["PRNDL"]
     self.adaptive_Cruise = False
     self.enable_lkas = False
+    self.lka_steering_cmd_counter = 0
 
   def update(self, pt_cp, loopback_cp):
     ret = car.CarState.new_message()
@@ -22,10 +22,13 @@ class CarState(CarStateBase):
     ret.lkasEnable = self.enable_lkas
     self.prev_cruise_buttons = self.cruise_buttons
     self.cruise_buttons = pt_cp.vl["ASCMSteeringButton"]["ACCButtons"]
-    ret.wheelSpeeds.fl = pt_cp.vl["EBCMWheelSpdFront"]["FLWheelSpd"] * CV.KPH_TO_MS
-    ret.wheelSpeeds.fr = pt_cp.vl["EBCMWheelSpdFront"]["FRWheelSpd"] * CV.KPH_TO_MS
-    ret.wheelSpeeds.rl = pt_cp.vl["EBCMWheelSpdRear"]["RLWheelSpd"] * CV.KPH_TO_MS
-    ret.wheelSpeeds.rr = pt_cp.vl["EBCMWheelSpdRear"]["RRWheelSpd"] * CV.KPH_TO_MS
+
+    ret.wheelSpeeds = self.get_wheel_speeds(
+      pt_cp.vl["EBCMWheelSpdFront"]["FLWheelSpd"],
+      pt_cp.vl["EBCMWheelSpdFront"]["FRWheelSpd"],
+      pt_cp.vl["EBCMWheelSpdRear"]["RLWheelSpd"],
+      pt_cp.vl["EBCMWheelSpdRear"]["RRWheelSpd"],
+    )
     ret.vEgoRaw = mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr])
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = ret.vEgoRaw < 0.01

@@ -1,1 +1,1 @@
-#define COMMA_VERSION "0.8.10-dev-pedal-1130"
+#define COMMA_VERSION "0.8.12"
