@@ -116,14 +116,14 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   connect(dcamBtn, &ButtonControl::clicked, [=]() { emit showDriverView(); });
   addItem(dcamBtn);
 
-  auto resetCalibBtn = new ButtonControl("Reset Calibration", "RESET", " ");
-  connect(resetCalibBtn, &ButtonControl::showDescription, this, &DevicePanel::updateCalibDescription);
-  connect(resetCalibBtn, &ButtonControl::clicked, [&]() {
-    if (ConfirmationDialog::confirm("Are you sure you want to reset calibration?", this)) {
-      params.remove("CalibrationParams");
-    }
-  });
-  addItem(resetCalibBtn);
+//  auto resetCalibBtn = new ButtonControl("Reset Calibration", "RESET", " ");
+//  connect(resetCalibBtn, &ButtonControl::showDescription, this, &DevicePanel::updateCalibDescription);
+//  connect(resetCalibBtn, &ButtonControl::clicked, [&]() {
+//    if (ConfirmationDialog::confirm("Are you sure you want to reset calibration?", this)) {
+//      params.remove("CalibrationParams");
+//    }
+//  });
+//  addItem(resetCalibBtn);
 
   if (!params.getBool("Passive")) {
     auto retrainingBtn = new ButtonControl("Review Training Guide", "REVIEW", "Review the rules, features, and limitations of openpilot");
@@ -153,16 +153,16 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   // power buttons
   QHBoxLayout *power_layout = new QHBoxLayout();
   power_layout->setSpacing(30);
-
-  QPushButton *reboot_btn = new QPushButton("Reboot");
-  reboot_btn->setObjectName("reboot_btn");
-  power_layout->addWidget(reboot_btn);
-  QObject::connect(reboot_btn, &QPushButton::clicked, this, &DevicePanel::reboot);
-
-  QPushButton *poweroff_btn = new QPushButton("Power Off");
-  poweroff_btn->setObjectName("poweroff_btn");
-  power_layout->addWidget(poweroff_btn);
-  QObject::connect(poweroff_btn, &QPushButton::clicked, this, &DevicePanel::poweroff);
+//
+//  QPushButton *reboot_btn = new QPushButton("Reboot");
+//  reboot_btn->setObjectName("reboot_btn");
+//  power_layout->addWidget(reboot_btn);
+//  QObject::connect(reboot_btn, &QPushButton::clicked, this, &DevicePanel::reboot);
+//
+//  QPushButton *poweroff_btn = new QPushButton("Power Off");
+//  poweroff_btn->setObjectName("poweroff_btn");
+//  power_layout->addWidget(poweroff_btn);
+//  QObject::connect(poweroff_btn, &QPushButton::clicked, this, &DevicePanel::poweroff);
 
   setStyleSheet(R"(
     #reboot_btn { height: 120px; border-radius: 15px; background-color: #393939; }
