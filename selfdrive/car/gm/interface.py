@@ -67,7 +67,7 @@ class CarInterface(CarInterfaceBase):
 
     tire_stiffness_factor = 0.5
 
-    ret.minSteerSpeed = 1 * CV.KPH_TO_MS
+    ret.minSteerSpeed = 11 * CV.KPH_TO_MS
     ret.steerRateCost = 0.3625 # def : 2.0
     ret.steerActuatorDelay = 0.1925  # def: 0.2 Default delay, not measured yet
 
@@ -109,8 +109,8 @@ class CarInterface(CarInterfaceBase):
     
     ret.longitudinalTuning.deadzoneBP = [0., 30.*CV.KPH_TO_MS]
     ret.longitudinalTuning.deadzoneV = [0., 0.10]
-    ret.longitudinalActuatorDelayLowerBound = 0.13
-    ret.longitudinalActuatorDelayUpperBound = 0.17
+    ret.longitudinalActuatorDelayLowerBound = 0.14
+    ret.longitudinalActuatorDelayUpperBound = 0.16
     
     ret.startAccel = -0.8
     ret.stopAccel = -2.0
@@ -128,11 +128,12 @@ class CarInterface(CarInterfaceBase):
   # returns a car.CarState
   def update(self, c, can_strings):
     self.cp.update_strings(can_strings)
+    self.cp_loopback.update_strings(can_strings)
 
-    ret = self.CS.update(self.cp)
+    ret = self.CS.update(self.cp, self.cp_loopback)
 
     ret.cruiseState.enabled = self.CS.main_on or self.CS.adaptive_Cruise
-    ret.canValid = self.cp.can_valid
+    ret.canValid = self.cp.can_valid and self.cp_loopback.can_valid
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     buttonEvents = []
@@ -169,9 +170,10 @@ class CarInterface(CarInterfaceBase):
     #   events.add(car.CarEvent.EventName.belowSteerSpeed)
     if self.CP.enableGasInterceptor:
       if self.CS.adaptive_Cruise and ret.brakePressed:
+        events.add(EventName.pedalPressed)
         self.CS.adaptive_Cruise = False
         self.CS.enable_lkas = False
-        events.add(EventName.pedalPressed)
+
 
     # handle button presses
     if self.CP.enableGasInterceptor:
@@ -182,35 +184,57 @@ class CarInterface(CarInterfaceBase):
             self.CS.enable_lkas = True
             events.add(EventName.buttonEnable)
             break
-          if (b.type == ButtonType.accelCruise and not b.pressed) and not self.CS.adaptive_Cruise:
-            self.CS.adaptive_Cruise = True
-            self.CS.enable_lkas = False
-            events.add(EventName.buttonEnable)
-            break
+          # if (b.type == ButtonType.accelCruise and not b.pressed) and not self.CS.adaptive_Cruise:
+          #   self.CS.adaptive_Cruise = True
+          #   self.CS.enable_lkas = False
+          #   events.add(EventName.buttonEnable)
+          #   break
           if (b.type == ButtonType.cancel and b.pressed) and self.CS.adaptive_Cruise:
             self.CS.adaptive_Cruise = False
-            self.CS.enable_lkas = False
+            self.CS.enable_lkas = True
             events.add(EventName.buttonCancel)
             break
           if (b.type == ButtonType.altButton3 and b.pressed) : #and self.CS.adaptive_Cruise
             self.CS.adaptive_Cruise = False
             self.CS.enable_lkas = True
+            events.add(EventName.buttonEnable) #어느 이벤트가 먼저인지 확인
             break
       else :#lat engage
-        for b in ret.buttonEvents:
-          if not self.CS.adaptive_Cruise and (b.type == ButtonType.altButton3 and b.pressed) : #and self.CS.adaptive_Cruise
-            self.CS.adaptive_Cruise = False
-            self.CS.enable_lkas = False
-            break
+        self.CS.adaptive_Cruise = False
+        self.CS.enable_lkas = True
+        # for b in ret.buttonEvents:
+        #   if not self.CS.adaptive_Cruise and (b.type == ButtonType.altButton3 and b.pressed) : #and self.CS.adaptive_Cruise
+        #     self.CS.adaptive_Cruise = False
+        #     self.CS.enable_lkas = False
+        #     break
 
     else :
       if self.CS.main_on: #wihtout pedal case
         self.CS.adaptive_Cruise = False
         self.CS.enable_lkas = True
-      else:
-        self.CS.adaptive_Cruise = False
-        self.CS.enable_lkas = False
+      # else:
+      #   self.CS.adaptive_Cruise = False
+      #   self.CS.enable_lkas = False
 
+    #Added by jc01rho inspired by JangPoo
+    if self.CS.main_on  and self.CS.enable_lkas and not self.CS.adaptive_Cruise and ret.cruiseState.enabled and ret.gearShifter == GearShifter.drive and ret.vEgo > 2 and not ret.brakePressed :
+      if ret.cruiseState.available and not ret.seatbeltUnlatched and not ret.espDisabled and self.flag_pcmEnable_able :
+
+        if self.flag_pcmEnable_initialSet == False :
+          self.initial_pcmEnable_counter = self.initial_pcmEnable_counter + 1
+          if self.initial_pcmEnable_counter > 750 :
+            # events.add(EventName.pcmEnable)
+            # self.flag_pcmEnable_initialSet = True
+            self.flag_pcmEnable_able = False
+            self.initial_pcmEnable_counter = 0
+        else :
+          events.add(EventName.pcmEnable)
+          self.flag_pcmEnable_able = False
+          # self.flag_pcmEnable_initialSet = True
+          # self.initial_pcmEnable_counter = 0
+    else  :
+      self.flag_pcmEnable_able = True
+    ###
     ret.events = events.to_msg()
 
     # copy back carState packet to CS
