@@ -341,7 +341,7 @@ static const addr_checks* gm_init(int16_t param) {
     gm_camera_bus = 1;
   }
 
-  controls_allowed = false;
+  controls_allowed = true;
   relay_malfunction_reset();
   return &gm_rx_checks;
 }
