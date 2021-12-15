@@ -123,7 +123,7 @@ int bus_vehicle = -1;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &gm_rx_checks, NULL, NULL, NULL);
+ bool valid = addr_safety_check(to_push, &gm_rx_checks, NULL, NULL, NULL);
 
   int addr = GET_ADDR(to_push);
   int bus = GET_BUS(to_push);
@@ -135,11 +135,9 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     cam_can_bus = 2;
   }
 
-  if (valid && (GET_BUS(to_push) == 0U)) {
-    int addr = GET_ADDR(to_push);
-
+  if (valid && bus == 0) {
     if (addr == MSG_RX_STEER) {
-      int torque_driver_new = ((GET_BYTE(to_push, 6) & 0x7U) << 8) | GET_BYTE(to_push, 7);
+      int torque_driver_new = ((GET_BYTE(to_push, 6) & 0x7) << 8) | GET_BYTE(to_push, 7);
       torque_driver_new = to_signed(torque_driver_new, 11);
       // update array of samples
       update_sample(&torque_driver, torque_driver_new);
@@ -153,20 +151,13 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
     // ACC steering wheel buttons
     if (addr == MSG_RX_BUTTON) {
-      int button = (GET_BYTE(to_push, 5) & 0x70U) >> 4;
+      int button = (GET_BYTE(to_push, 5) & 0x70) >> 4;
       switch (button) {
         case 2:  // resume
         case 3:  // set
         case 5:  // main on
           controls_allowed = 1;
           break;
-//        case 6:  // cancel
-//          if (!gas_interceptor_detected) {
-//            // Need to be able to cancel CC for Pedal to work
-//            //TODO: Investigate swapping controls
-//            controls_allowed = 1;
-//          }
-//          break;
         default:
           break;  // any other button is irrelevant
       }
@@ -176,12 +167,9 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_RX_BRAKE) {
       // Brake pedal's potentiometer returns near-zero reading
       // even when pedal is not pressed
-      brake_pressed = GET_BYTE(to_push, 1) >= 10U;
+      brake_pressed = GET_BYTE(to_push, 1) >= 10;
     }
 
-//    if (addr == 452) { //TODO: can we safely use v2?
-//      gas_pressed = GET_BYTE(to_push, 5) != 0U;
-//    }
     // Gas Interceptor Check
     if (addr == MSG_RX_PEDAL) {
       gas_interceptor_detected = 1;
@@ -194,6 +182,12 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       gas_pressed = GET_BYTE(to_push, 6) != 0;
     }
 
+    // Check if LKA camera are online
+    // on powertrain bus.
+    // 384 = ASCMLKASteeringCmd
+    generic_rx_checks(addr == MSG_TX_LKA);
+  }
+  return valid;
 /////////////////슐러는 189에 대해 조사하고있으나 기존 사용하던 판다펌에선 0x189(393) 이 리젠 으로 지정되어있음. 그러나 기존 어차피 gm_rx_hook 에서 패들 검사 안함
 /////////////////향후에 차차님에게 확인 필요
     // exit controls on regen paddle
@@ -204,25 +198,6 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 //      }
 //    }
 
-    // Pedal Interceptor
-////////////상단에서 이미 확인함.
-//    if (addr == MSG_RX_PEDAL) {
-//      gas_interceptor_detected = 1;
-//      int gas_interceptor = GM_GET_INTERCEPTOR(to_push);
-//      gas_pressed = gas_interceptor > GM_GAS_INTERCEPTOR_THRESHOLD;
-//      gas_interceptor_prev = gas_interceptor;
-//    }
-
-
-
-    // Check if ASCM or LKA camera are online
-    // on powertrain bus.
-    // 384 = ASCMLKASteeringCmd
-    // 715 = ASCMGasRegenCmd
-
-    generic_rx_checks(((addr == 384) || (addr == 715)));
-  }
-  return valid;
 }
 
 // all commands: gas/regen, friction brake and steering
@@ -315,9 +290,9 @@ static int gm_tx_hook(CANPacket_t *to_send) {
       ts_last = ts;
     }
 
-    if (violation) {
-      tx = 0;
-    }
+//    if (violation) {
+//      tx = 0;
+//    }
   }
 
   // GAS/REGEN: safety check
