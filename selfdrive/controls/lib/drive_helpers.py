@@ -11,6 +11,15 @@ ButtonPrev = ButtonType.unknown
 ButtonCnt = 0
 LongPressed = False
 
+
+# kph
+
+V_CRUISE_DELTA = 5
+
+V_CRUISE_DELTA_MI = 5 * CV.MPH_TO_KPH
+V_CRUISE_DELTA_KM = 10
+
+
 # WARNING: this value was determined based on the model's training distribution,
 #          model predictions above this speed can be unpredictable
 V_CRUISE_MAX = 145  # kph
