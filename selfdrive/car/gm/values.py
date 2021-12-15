@@ -19,24 +19,26 @@ class CarControllerParams():
   ADAS_KEEPALIVE_STEP = 100
   CAMERA_KEEPALIVE_STEP = 100
 
-  # Volt gasbrake lookups
-  MAX_GAS = 3072 # Safety limit, not ACC max. Stock ACC >4096 from standstill.
-  ZERO_GAS = 2048 # Coasting
-  MAX_BRAKE = 350 # ~ -3.5 m/s^2 with regen
+  # pedal lookups, only for Volt
+  MAX_GAS = 3072  # Only a safety limit
+  ZERO_GAS = 2048
+  MAX_BRAKE = 350  # Should be around 3.5m/s^2, including regen
 
   # Allow small margin below -3.5 m/s^2 from ISO 15622:2018 since we
   # perform the closed loop control, and might need some
-  # to apply some more braking if we're on a downhill slope.
+
   # Our controller should still keep the 2 second average above
   # -3.5 m/s^2 as per planner limits
-  ACCEL_MAX = 2. # m/s^2
-  ACCEL_MIN = -4. # m/s^2
+  ACCEL_MAX = 2.0
+  ACCEL_MIN = -4.0
+  ACCEL_SCALE = 4.0  # max(ACCEL_MAX, -ACCEL_MIN)
 
-  MAX_ACC_REGEN = 1404  # Max ACC regen is slightly less than max paddle regen
-  GAS_LOOKUP_BP = [-1., 0., ACCEL_MAX]
+  MAX_ACC_REGEN = 1404  # ACC Regen braking is slightly less powerful than max regen paddle
+  GAS_LOOKUP_BP = [-1, 0., ACCEL_MAX]
   GAS_LOOKUP_V = [MAX_ACC_REGEN, ZERO_GAS, MAX_GAS]
-  BRAKE_LOOKUP_BP = [ACCEL_MIN, -1.]
-  BRAKE_LOOKUP_V = [MAX_BRAKE, 0.]
+  BRAKE_LOOKUP_BP = [ACCEL_MIN, -0.1]
+  BRAKE_LOOKUP_V = [MAX_BRAKE, 0]
+  ACCEL_HYST_GAP = 0.02
 
 STEER_THRESHOLD = 1.0
 
