@@ -201,7 +201,7 @@ void ui_update_params(UIState *s) {
   const uint64_t frame = s->sm->frame;
   UIScene &scene = s->scene;
   if (frame % (5*UI_FREQ) == 0) {
-    scene.is_metric = Params().getBool("IsMetric");
+//    scene.is_metric = Params().getBool("IsMetric");
     s->show_debug_ui = Params().getBool("ShowDebugUI");
     s->show_cpu_temp = Params().getBool("ShowCpuTempUI");
 #if defined(QCOM) || defined(QCOM2)
