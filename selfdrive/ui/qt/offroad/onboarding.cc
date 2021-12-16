@@ -16,6 +16,11 @@ TrainingGuide::TrainingGuide(QWidget *parent) : QFrame(parent) {
 }
 
 void TrainingGuide::mouseReleaseEvent(QMouseEvent *e) {
+  if (click_timer.elapsed() < 250) {
+    return;
+  }
+  click_timer.restart();
+
   if (boundingRect[currentIndex].contains(e->x(), e->y())) {
     if (currentIndex == 9) {
       const QRect yes = QRect(692, 842, 492, 148);
@@ -40,6 +45,7 @@ void TrainingGuide::showEvent(QShowEvent *event) {
 
   currentIndex = 0;
   image.load(img_path + "step0.png");
+  click_timer.start();
 }
 
 void TrainingGuide::paintEvent(QPaintEvent *event) {
@@ -98,11 +104,11 @@ void TermsPage::showEvent(QShowEvent *event) {
   buttons->setSpacing(45);
   main_layout->addLayout(buttons);
 
-  QPushButton *decline_btn = new QPushButton("거절");
+  QPushButton *decline_btn = new QPushButton("Decline");
   buttons->addWidget(decline_btn);
   QObject::connect(decline_btn, &QPushButton::clicked, this, &TermsPage::declinedTerms);
 
-  accept_btn = new QPushButton("스크롤하여 진행");
+  accept_btn = new QPushButton("Scroll to accept");
   accept_btn->setEnabled(false);
   accept_btn->setStyleSheet(R"(
     QPushButton {

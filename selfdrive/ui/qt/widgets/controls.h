@@ -9,10 +9,6 @@
 #include "selfdrive/common/params.h"
 #include "selfdrive/ui/qt/widgets/toggle.h"
 
-#include <fstream>
-#include <cstdio>
-
-#include "selfdrive/hardware/hw.h"
 QFrame *horizontal_line(QWidget *parent = nullptr);
 
 class ElidedLabel : public QLabel {
@@ -132,11 +128,10 @@ public:
     }
   };
 
-protected:
+private:
   std::string key;
   Params params;
 };
-
 
 class ListWidget : public QWidget {
   Q_OBJECT
@@ -167,28 +162,26 @@ private:
   QVBoxLayout inner_layout;
 };
 
-
-//prebuilt param control class, this only uses for prebuilt toggle button.
-class PrebuiltParamControl : public ParamControl {
+// convenience class for wrapping layouts
+class LayoutWidget : public QWidget {
   Q_OBJECT
+
 public:
-  PrebuiltParamControl(const QString &param, const QString &title, const QString &desc, const QString &icon, QWidget *parent = nullptr) :
-          ParamControl(param, title,desc, icon, parent) {
-	key = param.toStdString();
-    //when instantiate object
-    if (params.getBool(param.toStdString().c_str())) {
-        std::ofstream output("/data/openpilot/prebuilt"); //touch prebuilt
-    } else {
-        std::remove("/data/openpilot/prebuilt"); //rm prebuilt
-    }
-    QObject::connect(this, &ToggleControl::toggleFlipped, [=](bool state) {
-          if (state ) {
-            std::ofstream output("/data/openpilot/prebuilt");
-        } else {
-            std::remove("/data/openpilot/prebuilt");
-        }
-    });
- }
+  LayoutWidget(QLayout *l, QWidget *parent = nullptr) : QWidget(parent) {
+    setLayout(l);
+  };
 };
 
+class ClickableWidget : public QWidget {
+  Q_OBJECT
 
+public:
+  ClickableWidget(QWidget *parent = nullptr);
+
+protected:
+  void mouseReleaseEvent(QMouseEvent *event) override;
+  void paintEvent(QPaintEvent *) override;
+
+signals:
+  void clicked();
+};

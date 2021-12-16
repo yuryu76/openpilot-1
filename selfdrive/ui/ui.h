@@ -1,10 +1,5 @@
 #pragma once
 
-#define UI_FEATURE_RIGHT_CPU_TEMP 1
-#define UI_FEATURE_RIGHT_BATTERY_LEVEL 1
-#define UI_FEATURE_DASHCAM 1
-
-#include <map>
 #include <memory>
 #include <string>
 #include <optional>
@@ -104,29 +99,14 @@ typedef struct UIScene {
   float light_sensor, accel_sensor, gyro_sensor;
   bool started, ignition, is_metric, longitudinal_control, end_to_end;
   uint64_t started_frame;
-
-  //Add-on
-  bool brakeLights;
-  int lead_status;
-  float lead_d_rel, lead_v_rel;
- 
-  cereal::DeviceState::Reader deviceState;
-  cereal::RadarState::LeadData::Reader lead_data[2];
-  cereal::CarState::Reader car_state;
-  cereal::ControlsState::Reader controls_state;
-  cereal::DriverState::Reader driver_state;
-  cereal::DriverMonitoringState::Reader dmonitoring_state;
-
-  // neokii debug UI
-  cereal::CarControl::Reader car_control;
-  cereal::CarParams::Reader car_params;
-  cereal::GpsLocationData::Reader gps_ext;
-  cereal::LiveParametersData::Reader live_params;
-  int satelliteCount;
-  
 } UIScene;
 
-typedef struct UIState {
+class UIState : public QObject {
+  Q_OBJECT
+
+public:
+  UIState(QObject* parent = 0);
+
   int fb_w = 0, fb_h = 0;
 
   std::unique_ptr<SubMaster> sm;
@@ -140,20 +120,6 @@ typedef struct UIState {
   QTransform car_space_transform;
   bool wide_camera;
 
-  bool show_debug_ui, custom_lead_mark, show_cpu_temp, show_batt_level;
-
-} UIState;
-
-
-class QUIState : public QObject {
-  Q_OBJECT
-
-public:
-  QUIState(QObject* parent = 0);
-
-  // TODO: get rid of this, only use signal
-  inline static UIState ui_state = {0};
-
 signals:
   void uiUpdate(const UIState &s);
   void offroadTransition(bool offroad);
@@ -166,6 +132,7 @@ private:
   bool started_prev = true;
 };
 
+UIState *uiState();
 
 // device management class
 
@@ -180,22 +147,22 @@ private:
   const float accel_samples = 5*UI_FREQ;
 
   bool awake = false;
-  int awake_timeout = 0;
-  float accel_prev = 0;
-  float gyro_prev = 0;
+  int interactive_timeout = 0;
+  bool ignition_on = false;
   int last_brightness = 0;
   FirstOrderFilter brightness_filter;
 
-  QTimer *timer;
-
   void updateBrightness(const UIState &s);
   void updateWakefulness(const UIState &s);
+  bool motionTriggered(const UIState &s);
+  void setAwake(bool on);
 
 signals:
   void displayPowerChanged(bool on);
+  void interactiveTimout();
 
 public slots:
-  void setAwake(bool on, bool reset);
+  void resetInteractiveTimout();
   void update(const UIState &s);
 };
 

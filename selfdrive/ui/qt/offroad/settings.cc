@@ -98,7 +98,7 @@ TogglesPanel::TogglesPanel(SettingsWindow *parent) : ListWidget(parent) {
     bool locked = params.getBool((param + "Lock").toStdString());
     toggle->setEnabled(!locked);
     if (!locked) {
-      connect(parent, &SettingsWindow::offroadTransition, toggle, &ParamControl::setEnabled);
+      connect(uiState(), &UIState::offroadTransition, toggle, &ParamControl::setEnabled);
     }
     addItem(toggle);
   }
@@ -144,7 +144,7 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
     addItem(regulatoryBtn);
   }
 
-  QObject::connect(parent, &SettingsWindow::offroadTransition, [=](bool offroad) {
+  QObject::connect(uiState(), &UIState::offroadTransition, [=](bool offroad) {
     for (auto btn : findChildren<ButtonControl *>()) {
       btn->setEnabled(offroad);
     }
@@ -173,7 +173,6 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   addItem(power_layout);
 }
 
-
 void DevicePanel::updateCalibDescription() {
   QString desc =
       "openpilot requires the device to be mounted within 4° left or right and "
@@ -188,8 +187,8 @@ void DevicePanel::updateCalibDescription() {
         double pitch = calib.getRpyCalib()[1] * (180 / M_PI);
         double yaw = calib.getRpyCalib()[2] * (180 / M_PI);
         desc += QString(" Your device is pointed %1° %2 and %3° %4.")
-                    .arg(QString::number(std::abs(pitch), 'g', 1), pitch > 0 ? "up" : "down",
-                         QString::number(std::abs(yaw), 'g', 1), yaw > 0 ? "right" : "left");
+                    .arg(QString::number(std::abs(pitch), 'g', 1), pitch > 0 ? "down" : "up",
+                         QString::number(std::abs(yaw), 'g', 1), yaw > 0 ? "left" : "right");
       }
     } catch (kj::Exception) {
       qInfo() << "invalid CalibrationParams";
@@ -199,10 +198,10 @@ void DevicePanel::updateCalibDescription() {
 }
 
 void DevicePanel::reboot() {
-  if (QUIState::ui_state.status == UIStatus::STATUS_DISENGAGED) {
+  if (uiState()->status == UIStatus::STATUS_DISENGAGED) {
     if (ConfirmationDialog::confirm("Are you sure you want to reboot?", this)) {
       // Check engaged again in case it changed while the dialog was open
-      if (QUIState::ui_state.status == UIStatus::STATUS_DISENGAGED) {
+      if (uiState()->status == UIStatus::STATUS_DISENGAGED) {
         Params().putBool("DoReboot", true);
       }
     }
@@ -212,10 +211,10 @@ void DevicePanel::reboot() {
 }
 
 void DevicePanel::poweroff() {
-  if (QUIState::ui_state.status == UIStatus::STATUS_DISENGAGED) {
+  if (uiState()->status == UIStatus::STATUS_DISENGAGED) {
     if (ConfirmationDialog::confirm("Are you sure you want to power off?", this)) {
       // Check engaged again in case it changed while the dialog was open
-      if (QUIState::ui_state.status == UIStatus::STATUS_DISENGAGED) {
+      if (uiState()->status == UIStatus::STATUS_DISENGAGED) {
         Params().putBool("DoShutdown", true);
       }
     }
@@ -223,8 +222,6 @@ void DevicePanel::poweroff() {
     ConfirmationDialog::alert("Disengage to Power Off", this);
   }
 }
-
-
 
 SoftwarePanel::SoftwarePanel(QWidget* parent) : ListWidget(parent) {
   gitBranchLbl = new LabelControl("Git Branch");
@@ -250,7 +247,7 @@ SoftwarePanel::SoftwarePanel(QWidget* parent) : ListWidget(parent) {
       params.putBool("DoUninstall", true);
     }
   });
-  connect(parent, SIGNAL(offroadTransition(bool)), uninstallBtn, SLOT(setEnabled(bool)));
+  connect(uiState(), &UIState::offroadTransition, uninstallBtn, &QPushButton::setEnabled);
 
   QWidget *widgets[] = {versionLbl, lastUpdateLbl, updateBtn, gitBranchLbl, gitCommitLbl, osVersionLbl, uninstallBtn};
   for (QWidget* w : widgets) {
@@ -289,15 +286,14 @@ void SoftwarePanel::updateLabels() {
   osVersionLbl->setText(QString::fromStdString(Hardware::get_os_version()).trimmed());
 }
 
-QWidget * network_panel(QWidget * parent) {
-#ifdef QCOM
-  QWidget *w = new QWidget(parent);
-  QVBoxLayout *layout = new QVBoxLayout(w);
+C2NetworkPanel::C2NetworkPanel(QWidget *parent) : QWidget(parent) {
+  QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setContentsMargins(50, 0, 50, 0);
 
   ListWidget *list = new ListWidget();
   list->setSpacing(30);
   // wifi + tethering buttons
+#ifdef QCOM
   auto wifiBtn = new ButtonControl("Wi-Fi Settings", "OPEN");
   QObject::connect(wifiBtn, &ButtonControl::clicked, [=]() { HardwareEon::launch_wifi(); });
   list->addItem(wifiBtn);
@@ -305,17 +301,15 @@ QWidget * network_panel(QWidget * parent) {
   auto tetheringBtn = new ButtonControl("Tethering Settings", "OPEN");
   QObject::connect(tetheringBtn, &ButtonControl::clicked, [=]() { HardwareEon::launch_tethering(); });
   list->addItem(tetheringBtn);
+#endif
+  ipaddress = new LabelControl("IP Address", "");
+  list->addItem(ipaddress);
 
   // SSH key management
   list->addItem(new SshToggle());
   list->addItem(new SshControl());
-
   layout->addWidget(list);
   layout->addStretch(1);
-#else
-  Networking *w = new Networking(parent);
-#endif
-  return w;
 }
 
 void C2NetworkPanel::showEvent(QShowEvent *event) {
@@ -337,82 +331,18 @@ QString C2NetworkPanel::getIPAddress() {
   return result.substr(begin, end - begin).c_str();
 }
 
-
+QWidget *network_panel(QWidget *parent) {
+#ifdef QCOM
+  return new C2NetworkPanel(parent);
+#else
+  return new Networking(parent);
+#endif
+}
 
 void SettingsWindow::showEvent(QShowEvent *event) {
   panel_widget->setCurrentIndex(0);
   nav_btns->buttons()[0]->setChecked(true);
 }
-
-
-QWidget * community_panel(QWidget * parent) {
-  QWidget *w = new QWidget(parent);
-  QVBoxLayout *toggles_list = new QVBoxLayout(w);
-  toggles_list->setSpacing(30);
-
-  toggles_list->addWidget(new ParamControl("AutoLaneChangeEnabled",
-                                            "자동 차선변경 사용",
-                                            "자동 차선 변경. 사용에 주의 하십시오",
-                                            "../assets/offroad/icon_road.png"
-                                              ));
-  toggles_list->addWidget(horizontal_line());
-  toggles_list->addWidget(new PrebuiltParamControl("PrebuiltEnabled",
-                                            "Enable Prebuilt File",
-                                            "완전 정상주행 2회 이후 활성화하세요. prebuilt 파일이 있는경우 새로 빌드하지 않습니다. 업데이트창이 뜰때 내용을 확인하세요.",
-                                            "../assets/offroad/icon_checkmark.png"
-                                            ));
-
-
-
-//  toggles_list->addWidget(horizontal_line());
-//  toggles_list->addWidget(new LQRSelection());
-//  toggles_list->addWidget(horizontal_line());
-//  toggles_list->addWidget(new INDISelection());
-
-  QWidget *widget = new QWidget;
-  widget->setLayout(toggles_list);
-  return widget;
-}
-
-
-
-QWidget * ui_panel(QWidget * parent) {
-  QWidget *w = new QWidget(parent);
-  QVBoxLayout *toggles_list = new QVBoxLayout(w);
-  toggles_list->setSpacing(30);
-
-
-  toggles_list->addWidget(new ParamControl("ShowDebugUI",
-                                            "Show debug UI",
-                                            "페달 관련 디버깅 정보 표시",
-                                            "../assets/offroad/icon_checkmark.png"
-                                            ));
-
-  toggles_list->addWidget(new ParamControl("ShowCpuTempUI",
-                                            "Show CPU Temp UI",
-                                            "좌측열에 CPU 온도 표시",
-                                            "../assets/offroad/icon_checkmark.png"
-                                            ));
-#if defined(QCOM) || defined(QCOM2)
-  toggles_list->addWidget(new ParamControl("ShowBattLevelUI",
-                                            "Show Battery Level UI",
-                                            "좌측열에 배터리 잔량 표시",
-                                            "../assets/offroad/icon_checkmark.png"
-                                            ));
-#endif
-
-//  toggles_list->addWidget(horizontal_line());
-//  toggles_list->addWidget(new LQRSelection());
-//  toggles_list->addWidget(horizontal_line());
-//  toggles_list->addWidget(new INDISelection());
-
-  QWidget *widget = new QWidget;
-  widget->setLayout(toggles_list);
-  return widget;
-}
-
-
-
 
 SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
 
@@ -453,12 +383,10 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
   QObject::connect(device, &DevicePanel::showDriverView, this, &SettingsWindow::showDriverView);
 
   QList<QPair<QString, QWidget *>> panels = {
-    {"장치", device},
-    {"네트워크", network_panel(this)},
-    {"토글메뉴", new TogglesPanel(this)},
-    {"개발자", new SoftwarePanel(this)},
-    {"커뮤니티", community_panel(this)},
-    {"UI", ui_panel(this)},
+    {"Device", device},
+    {"Network", network_panel(this)},
+    {"Toggles", new TogglesPanel(this)},
+    {"Software", new SoftwarePanel(this)},
   };
 
 #ifdef ENABLE_MAPS

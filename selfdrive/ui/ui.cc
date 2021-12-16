@@ -110,20 +110,8 @@ static void update_state(UIState *s) {
   if (sm.updated("modelV2")) {
     update_model(s, sm["modelV2"].getModelV2());
   }
-
-    if (sm.updated("carState")) {
-	  s->scene.brakeLights = sm["carState"].getCarState().getBrakeLights();
-  }
-
-  if (sm.updated("modelV2")) {
-    update_model(s, sm["modelV2"].getModelV2());
-  }
   if (sm.updated("radarState")) {
     std::optional<cereal::ModelDataV2::XYZTData::Reader> line;
-    auto radar_state = sm["radarState"].getRadarState();
-    s->scene.lead_v_rel = radar_state.getLeadOne().getVRel();
-    s->scene.lead_d_rel = radar_state.getLeadOne().getDRel();
-    s->scene.lead_status = radar_state.getLeadOne().getStatus();
     if (sm.rcv_frame("modelV2") > 0) {
       line = sm["modelV2"].getModelV2().getPosition();
     }
@@ -198,16 +186,7 @@ static void update_state(UIState *s) {
 }
 
 void ui_update_params(UIState *s) {
-  const uint64_t frame = s->sm->frame;
-  UIScene &scene = s->scene;
-  if (frame % (5*UI_FREQ) == 0) {
-//    scene.is_metric = Params().getBool("IsMetric");
-    s->show_debug_ui = Params().getBool("ShowDebugUI");
-    s->show_cpu_temp = Params().getBool("ShowCpuTempUI");
-#if defined(QCOM) || defined(QCOM2)
-    s->show_batt_level = Params().getBool("ShowBattLevelUI");
-#endif
-  }
+  s->scene.is_metric = Params().getBool("IsMetric");
 }
 
 static void update_status(UIState *s) {
@@ -239,40 +218,43 @@ static void update_status(UIState *s) {
 }
 
 
-QUIState::QUIState(QObject *parent) : QObject(parent) {
-  ui_state.sm = std::make_unique<SubMaster, const std::initializer_list<const char *>>({
+UIState::UIState(QObject *parent) : QObject(parent) {
+  sm = std::make_unique<SubMaster, const std::initializer_list<const char *>>({
     "modelV2", "controlsState", "liveCalibration", "radarState", "deviceState", "roadCameraState",
     "pandaStates", "carParams", "driverMonitoringState", "sensorEvents", "carState", "liveLocationKalman",
-    "gpsLocationExternal", "radarState", "carControl", "liveParameters", "ubloxGnss"
   });
 
   Params params;
-  ui_state.wide_camera = Hardware::TICI() ? params.getBool("EnableWideCamera") : false;
-  ui_state.has_prime = params.getBool("HasPrime");
+  wide_camera = Hardware::TICI() ? params.getBool("EnableWideCamera") : false;
+  has_prime = params.getBool("HasPrime");
 
   // update timer
   timer = new QTimer(this);
-  QObject::connect(timer, &QTimer::timeout, this, &QUIState::update);
+  QObject::connect(timer, &QTimer::timeout, this, &UIState::update);
   timer->start(1000 / UI_FREQ);
 }
 
-void QUIState::update() {
-  update_sockets(&ui_state);
-  update_state(&ui_state);
-  update_status(&ui_state);
+void UIState::update() {
+  update_sockets(this);
+  update_state(this);
+  update_status(this);
 
-  if (ui_state.scene.started != started_prev || ui_state.sm->frame == 1) {
-    started_prev = ui_state.scene.started;
-    emit offroadTransition(!ui_state.scene.started);
+  if (scene.started != started_prev || sm->frame == 1) {
+    started_prev = scene.started;
+    emit offroadTransition(!scene.started);
   }
 
-  if (ui_state.sm->frame % UI_FREQ == 0) {
+  if (sm->frame % UI_FREQ == 0) {
     watchdog_kick();
   }
-  emit uiUpdate(ui_state);
+  emit uiUpdate(*this);
 }
 
 Device::Device(QObject *parent) : brightness_filter(BACKLIGHT_OFFROAD, BACKLIGHT_TS, BACKLIGHT_DT), QObject(parent) {
+  setAwake(true);
+  resetInteractiveTimout();
+
+  QObject::connect(uiState(), &UIState::uiUpdate, this, &Device::update);
 }
 
 void Device::update(const UIState &s) {
@@ -280,20 +262,20 @@ void Device::update(const UIState &s) {
   updateWakefulness(s);
 
   // TODO: remove from UIState and use signals
-  QUIState::ui_state.awake = awake;
+  uiState()->awake = awake;
 }
 
-void Device::setAwake(bool on, bool reset) {
+void Device::setAwake(bool on) {
   if (on != awake) {
     awake = on;
     Hardware::set_display_power(awake);
     LOGD("setting display power %d", awake);
     emit displayPowerChanged(awake);
   }
+}
 
-  if (reset) {
-    awake_timeout = 30 * UI_FREQ;
-  }
+void Device::resetInteractiveTimout() {
+  interactive_timeout = (ignition_on ? 10 : 30) * UI_FREQ;
 }
 
 void Device::updateBrightness(const UIState &s) {
@@ -324,18 +306,33 @@ void Device::updateBrightness(const UIState &s) {
   last_brightness = brightness;
 }
 
-void Device::updateWakefulness(const UIState &s) {
-  awake_timeout = std::max(awake_timeout - 1, 0);
+bool Device::motionTriggered(const UIState &s) {
+  static float accel_prev = 0;
+  static float gyro_prev = 0;
 
-  bool should_wake = s.scene.started || s.scene.ignition;
-  if (!should_wake) {
-    // tap detection while display is off
-    bool accel_trigger = abs(s.scene.accel_sensor - accel_prev) > 0.2;
-    bool gyro_trigger = abs(s.scene.gyro_sensor - gyro_prev) > 0.15;
-    should_wake = accel_trigger && gyro_trigger;
-    gyro_prev = s.scene.gyro_sensor;
-    accel_prev = (accel_prev * (accel_samples - 1) + s.scene.accel_sensor) / accel_samples;
+  bool accel_trigger = abs(s.scene.accel_sensor - accel_prev) > 0.2;
+  bool gyro_trigger = abs(s.scene.gyro_sensor - gyro_prev) > 0.15;
+
+  gyro_prev = s.scene.gyro_sensor;
+  accel_prev = (accel_prev * (accel_samples - 1) + s.scene.accel_sensor) / accel_samples;
+
+  return (!awake && accel_trigger && gyro_trigger);
+}
+
+void Device::updateWakefulness(const UIState &s) {
+  bool ignition_just_turned_off = !s.scene.ignition && ignition_on;
+  ignition_on = s.scene.ignition;
+
+  if (ignition_just_turned_off || motionTriggered(s)) {
+    resetInteractiveTimout();
+  } else if (interactive_timeout > 0 && --interactive_timeout == 0) {
+    emit interactiveTimout();
   }
 
-  setAwake(awake_timeout, should_wake);
+  setAwake(s.scene.ignition || interactive_timeout > 0);
+}
+
+UIState *uiState() {
+  static UIState ui_state;
+  return &ui_state;
 }
