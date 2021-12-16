@@ -99,10 +99,10 @@ class CarInterface(CarInterfaceBase):
 
     # longitudinal
     ret.longitudinalTuning.kpBP = [0., 10.*CV.KPH_TO_MS, 25.*CV.KPH_TO_MS, 40.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 80.*CV.KPH_TO_MS, 100.*CV.KPH_TO_MS, 110.*CV.KPH_TO_MS]
-    ret.longitudinalTuning.kpV = [1.35, 1.2, 0.86, 0.66, 0.63, 0.57, 0.54, 0.52]
+    ret.longitudinalTuning.kpV = [1.15, 1.05, 0.81, 0.66, 0.63, 0.57, 0.54, 0.52]
   
     ret.longitudinalTuning.kiBP = [0., 130. * CV.KPH_TO_MS]
-    ret.longitudinalTuning.kiV = [0.18, 0.12]
+    ret.longitudinalTuning.kiV = [0.20, 0.12]
     
     #ret.longitudinalTuning.kfBP = [15., 20., 25.]
     #ret.longitudinalTuning.kfV = [1., 0.5, 0.2]
@@ -113,9 +113,9 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalActuatorDelayUpperBound = 0.17
     
     ret.startAccel = -0.8
-    ret.stopAccel = -2.0
+    ret.stopAccel = -4.0
     ret.startingAccelRate = 1.6
-    ret.stoppingDecelRate = 0.8
+    ret.stoppingDecelRate = 1.5
     ret.vEgoStopping = 0.5
     ret.vEgoStarting = 0.5
     ret.stoppingControl = True
