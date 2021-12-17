@@ -87,19 +87,3 @@ private:
   QString getIPAddress();
   LabelControl *ipaddress;
 };
-
-
-class CommunityPanel : public QWidget {
-    Q_OBJECT
-
-private:
-    QStackedLayout* main_layout = nullptr;
-    QWidget* homeScreen = nullptr;
-    SelectCar* selectCar = nullptr;
-
-    QWidget* homeWidget;
-
-public:
-    explicit CommunityPanel(QWidget *parent = nullptr);
-};
-
