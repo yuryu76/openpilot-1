@@ -1,72 +1,21 @@
 // board enforces
 //   in-state
-//      accel set/resume
+//      accel set/resume/main on
 //   out-state
-//      cancel button
-//      regen paddle
-//      accel rising edge
 //      brake rising edge
 //      brake > 0mph
-
-
-typedef struct GM_LIMIT {
-  const int GM_MAX_STEER;
-  const int GM_MAX_RT_DELTA;
-  const int GM_MAX_RATE_UP;
-  const int GM_MAX_RATE_DOWN;
-  const int GM_DRIVER_TORQUE_ALLOWANCE;
-  const int GM_DRIVER_TORQUE_FACTOR;
-  const int GM_MAX_GAS;
-  const int GM_MAX_REGEN;
-  const int GM_MAX_BRAKE;
-}GM_LIMIT;
-
-const GM_LIMIT GM_LIMITS[] =
-{
-  { // safety param 0 - Default
-    .GM_MAX_STEER = 300,
-    .GM_MAX_RT_DELTA = 128,
-    .GM_MAX_RATE_UP = 7, 
-    .GM_MAX_RATE_DOWN = 17,
-    .GM_DRIVER_TORQUE_ALLOWANCE = 50,
-    .GM_DRIVER_TORQUE_FACTOR = 4,
-    .GM_MAX_GAS = 3072,
-    .GM_MAX_REGEN = 1404,
-    .GM_MAX_BRAKE = 350
-  },
-  { // safety param 1 - Trucks
-    .GM_MAX_STEER = 600,
-    .GM_MAX_RT_DELTA = 319,
-    .GM_MAX_RATE_UP = 14, 
-    .GM_MAX_RATE_DOWN = 34,
-    .GM_DRIVER_TORQUE_ALLOWANCE = 100,
-    .GM_DRIVER_TORQUE_FACTOR = 4,
-    .GM_MAX_GAS = 3072,
-    .GM_MAX_REGEN = 1404,
-    .GM_MAX_BRAKE = 350
-  },
-};
-
-int gm_safety_param = 0;
-int gm_good_cam_cnt = 0;
-bool gm_allow_fwd = false;
-bool gm_block_fwd = false;
-int gm_camera_bus = 2;
-bool gm_has_relay = true;
-
-#define GM_MAX_STEER (GM_LIMITS[gm_safety_param].GM_MAX_STEER)
-#define GM_MAX_RT_DELTA (GM_LIMITS[gm_safety_param].GM_MAX_RT_DELTA)
-#define GM_MAX_RATE_UP (GM_LIMITS[gm_safety_param].GM_MAX_RATE_UP)
-#define GM_MAX_RATE_DOWN (GM_LIMITS[gm_safety_param].GM_MAX_RATE_DOWN)
-#define GM_DRIVER_TORQUE_ALLOWANCE (GM_LIMITS[gm_safety_param].GM_DRIVER_TORQUE_ALLOWANCE)
-#define GM_DRIVER_TORQUE_FACTOR (GM_LIMITS[gm_safety_param].GM_DRIVER_TORQUE_FACTOR)
-#define GM_MAX_GAS (GM_LIMITS[gm_safety_param].GM_MAX_GAS)
-#define GM_MAX_REGEN (GM_LIMITS[gm_safety_param].GM_MAX_REGEN)
-#define GM_MAX_BRAKE (GM_LIMITS[gm_safety_param].GM_MAX_BRAKE)
-
+const int GM_MAX_STEER = 300;
+const int GM_MAX_RT_DELTA = 128;          // max delta torque allowed for real time checks
 const uint32_t GM_RT_INTERVAL = 250000;    // 250ms between real time checks
+const int GM_MAX_RATE_UP = 8;
+const int GM_MAX_RATE_DOWN = 12;
+const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
+const int GM_DRIVER_TORQUE_FACTOR = 4;
+const int GM_MAX_GAS = 3072;
+const int GM_MAX_REGEN = 1404;
+const int GM_MAX_BRAKE = 350;
 const int GM_GAS_INTERCEPTOR_THRESHOLD = 458;  // (610 + 306.25) / 2ratio between offset and gain from dbc file
-#define GM_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + (GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2) // avg between 2 tracks
+#define GM_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + ((GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2 ) / 2) // avg between 2 tracks
 
 // Safety-relevant CAN messages for Bolt EV
 #define MSG_RX_STEER      0x184   // RX from PSCM, for steering torque and status
@@ -81,27 +30,8 @@ const int GM_GAS_INTERCEPTOR_THRESHOLD = 458;  // (610 + 306.25) / 2ratio betwee
 #define MSG_TX_ASCM       0x40A   // TX by OP, for ASCM, To do : We need to check if this message is used for Bolt EV or not.
 #define MSG_TX_ACC        0x370   // TX by OP, for ACC Status, To do : We need to check if this message is used for Bolt EV or not.
 #define MSG_TX_PEDAL      0x200   // TX by OP, for Pedal Interceptor
-#define MSG_TX_BRAKE      0x315   // maybe tx BY OP, but Bolt cannot brakes,
-
 #define MSG_REGEN         0x189   // TX/RX for Regen Paddle
 
-
-
-
-//const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6}, {512, 0, 6}, {789, 0, 5}, {800, 0, 6},  // pt bus
-//                             {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
-//                             {789, 2, 5},  // ch bus
-//                             {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
-//
-//// TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
-//AddrCheckStruct gm_addr_checks[] = {
-//  {.msg = {{388, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-//  {.msg = {{842, 0, 5, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-//  {.msg = {{481, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-//  {.msg = {{241, 0, 6, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-//  {.msg = {{452, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-//
-//
 
 const CanMsg GM_TX_MSGS[] = {{MSG_TX_LKA, 0, 4}, {MSG_TX_ALIVE, 0, 7}, {MSG_TX_ASCM, 0, 7}, {MSG_TX_ACC, 0, 6}, {MSG_TX_PEDAL, 0, 6}, {MSG_REGEN, 0, 7}, // pt bus
                              {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
@@ -116,6 +46,7 @@ AddrCheckStruct gm_addr_checks[] = {
 };
 #define GM_RX_CHECK_LEN (sizeof(gm_addr_checks) / sizeof(gm_addr_checks[0]))
 addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
+
 int cam_can_bus = -1;
 int bus_camera = -1;
 int bus_vehicle = -1;
@@ -188,8 +119,8 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     generic_rx_checks(addr == MSG_TX_LKA);
   }
   return valid;
-/////////////////ìŠëŸ¬ëŠ” 189ì— ëŒ€í•´ ì¡°ì‚¬í•˜ê³ ìžˆìœ¼ë‚˜ ê¸°ì¡´ ì‚¬ìš©í•˜ë˜ íŒë‹¤íŽŒì—ì„  0x189(393) ì´ ë¦¬ì   ìœ¼ë¡œ ì§€ì •ë˜ì–´ìžˆìŒ. ê·¸ëŸ¬ë‚˜ ê¸°ì¡´ ì–´ì°¨í”¼ gm_rx_hook ì—ì„œ íŒ¨ë“¤ ê²€ì‚¬ ì•ˆí•¨
-/////////////////í–¥í›„ì— ì°¨ì°¨ë‹˜ì—ê²Œ í™•ì¸ í•„ìš”
+/////////////////½¶·¯´Â 189¿¡ ´ëÇØ Á¶»çÇÏ°íÀÖÀ¸³ª ±âÁ¸ »ç¿ëÇÏ´ø ÆÇ´ÙÆß¿¡¼± 0x189(393) ÀÌ ¸®Á¨ À¸·Î ÁöÁ¤µÇ¾îÀÖÀ½. ±×·¯³ª ±âÁ¸ ¾îÂ÷ÇÇ gm_rx_hook ¿¡¼­ ÆÐµé °Ë»ç ¾ÈÇÔ
+/////////////////ÇâÈÄ¿¡ Â÷Â÷´Ô¿¡°Ô È®ÀÎ ÇÊ¿ä
     // exit controls on regen paddle
 //    if (addr == 189) {
 //      bool regen = GET_BYTE(to_push, 0) & 0x20U;
@@ -389,23 +320,6 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 
 static const addr_checks* gm_init(int16_t param) {
-//  gm_safety_param = (int)param;
-//  gm_good_cam_cnt = 0;
-//  gm_allow_fwd = false;
-//  gm_block_fwd = false;
-//  gm_camera_bus = 2;
-//  gm_has_relay = true;
-//
-//  if (car_harness_status == HARNESS_STATUS_NC) {
-//    //puts("gm_init: No harness attached, assuming OBD or Giraffe\n");
-//    //OBD harness and older pandas use bus 1 and no relay
-//    gm_has_relay = false;
-//    gm_camera_bus = 1;
-//  }
-//
-//  controls_allowed = true;
-//  relay_malfunction_reset();
-//  return &gm_rx_checks;
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
@@ -415,15 +329,10 @@ static const addr_checks* gm_init(int16_t param) {
   //bus_radar = 1;  // Radar can bus, Bolt EV doesn't need this can bus
   bus_vehicle = 0; //vehicle PT can bus for comma ai harness
   return &gm_rx_checks;
-
 }
 
+
 const safety_hooks gm_hooks = {
-//  .init = gm_init,
-//  .rx = gm_rx_hook,
-//  .tx = gm_tx_hook,
-//  .tx_lin = nooutput_tx_lin_hook,
-//  .fwd = gm_fwd_hook,
   .init = gm_init,
   .rx = gm_rx_hook,
   .tx = gm_tx_hook,
