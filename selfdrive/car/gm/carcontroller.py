@@ -82,10 +82,10 @@ class CarController():
 
       comma_pedal, self.accel_steady = accel_hysteresis(comma_pedal, self.accel_steady)
 
-      if (frame % 4) == 0:
-        idx = (frame // 4) % 4
+    if (frame % 4) == 0:
+      idx = (frame // 4) % 4
 
-        can_sends.append(create_gas_interceptor_command(self.packer_pt, comma_pedal, idx))
+      can_sends.append(create_gas_interceptor_command(self.packer_pt, comma_pedal, idx))
       
       
 ##페달에 accel, brake 개념 적용시      
