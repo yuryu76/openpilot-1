@@ -193,13 +193,14 @@ class CarInterface(CarInterfaceBase):
             self.CS.enable_lkas = True
             break
       else :#lat engage
-        self.CS.adaptive_Cruise = False
-        self.CS.enable_lkas = True
-        # for b in ret.buttonEvents:
-        #   if not self.CS.adaptive_Cruise and (b.type == ButtonType.altButton3 and b.pressed) : #and self.CS.adaptive_Cruise
-        #     self.CS.adaptive_Cruise = False
-        #     self.CS.enable_lkas = False
-        #     break
+        # self.CS.adaptive_Cruise = False
+        # self.CS.enable_lkas = True
+        #
+        for b in ret.buttonEvents:
+          if not self.CS.adaptive_Cruise and (b.type == ButtonType.altButton3 and b.pressed) : #and self.CS.adaptive_Cruise
+            self.CS.adaptive_Cruise = False
+            self.CS.enable_lkas = False
+            break
 
     else :
       if self.CS.main_on: #wihtout pedal case
