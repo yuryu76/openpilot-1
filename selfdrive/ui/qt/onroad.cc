@@ -181,6 +181,13 @@ void OnroadHud::updateState(const UIState &s) {
   QString maxspeed_str = cruise_set ? QString::number(std::nearbyint(maxspeed)) : "N/A";
   float cur_speed = std::max(0.0, sm["carState"].getCarState().getVEgo() * (s.scene.is_metric ? MS_TO_KPH : MS_TO_MPH));
 
+  bool mainOn = sm["carState"].getCarState().getMainOn();
+  bool lkasEnabled = sm["carState"].getCarState().getLkasEnable();
+  bool adaptiveCruise = sm["carState"].getCarState().getAdaptiveCruise();
+  setProperty("mainOn", mainOn);
+  setProperty("lkasEnabled", lkasEnabled);
+  setProperty("adaptiveCruise", adaptiveCruise);
+
   setProperty("is_cruise_set", cruise_set);
   setProperty("speed", QString::number(std::nearbyint(cur_speed)));
   setProperty("maxSpeed", maxspeed_str);
