@@ -72,12 +72,20 @@ class CarController():
       can_sends.append(gmcan.create_steering_control(self.packer_pt, CanBus.POWERTRAIN, apply_steer, idx, lkas_enabled))
 
     # Pedal/Regen
-    comma_pedal =0
+    comma_pedal =0  #for supress linter error.
+    accelMultiplier = 0.475 #default initializer.
+    if CS.vEgo * CV.MS_TO_KPH < 10 :
+      accelMultiplier = 0.35
+    if CS.vEgo * CV.MS_TO_KPH < 40 :
+      accelMultiplier = 0.525
+    else : # above 40 km/h
+      accelMultiplier = 0.415
+
     if not enabled or not CS.adaptive_Cruise or not CS.CP.enableGasInterceptor:
       comma_pedal = 0
     elif CS.adaptive_Cruise:
       min_pedal_speed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
-      pedal_accel = actuators.accel * 0.525
+      pedal_accel = actuators.accel * accelMultiplier
       comma_pedal = clip(pedal_accel, min_pedal_speed, 1.)
 #      comma_pedal = clip(actuators.accel, 0., 1.)
 
