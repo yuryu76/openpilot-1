@@ -74,9 +74,9 @@ class CarController():
     # Pedal/Regen
     comma_pedal =0  #for supress linter error.
     accelMultiplier = 0.475 #default initializer.
-    if CS.out.vEgo * CV.MS_TO_KPH < 10 :
+    if CS.vEgo * CV.MS_TO_KPH < 10 :
       accelMultiplier = 0.35
-    elif CS.out.vEgo * CV.MS_TO_KPH < 40 :
+    elif CS.vEgo * CV.MS_TO_KPH < 40 :
       accelMultiplier = 0.525
     else : # above 40 km/h
       accelMultiplier = 0.415
