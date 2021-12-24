@@ -165,7 +165,7 @@ OnroadHud::OnroadHud(QWidget *parent) : QWidget(parent) {
   engage_img = QPixmap("../assets/img_chffr_wheel.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
   dm_img = QPixmap("../assets/img_driver_face.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
   brake_img =  QPixmap("../assets/img_brake_disc.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-  lat_img =  QPixmap("../assets/img_lat.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+//  lat_img =  QPixmap("../assets/img_lat.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
   lat_icon_img =  QPixmap("../assets/img_lat_icon.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
   long_img =  QPixmap("../assets/img_long.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
