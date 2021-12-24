@@ -164,6 +164,10 @@ void OnroadAlerts::paintEvent(QPaintEvent *event) {
 OnroadHud::OnroadHud(QWidget *parent) : QWidget(parent) {
   engage_img = QPixmap("../assets/img_chffr_wheel.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
   dm_img = QPixmap("../assets/img_driver_face.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  brake_img =  QPixmap("../assets/img_brake_disc.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  lat_img =  QPixmap("../assets/img_lat.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  lat_icon_img =  QPixmap("../assets/img_lat_icon.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  long_img =  QPixmap("../assets/img_long.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
   connect(this, &OnroadHud::valueChanged, [=] { update(); });
 }
@@ -180,6 +184,13 @@ void OnroadHud::updateState(const UIState &s) {
   }
   QString maxspeed_str = cruise_set ? QString::number(std::nearbyint(maxspeed)) : "N/A";
   float cur_speed = std::max(0.0, sm["carState"].getCarState().getVEgo() * (s.scene.is_metric ? MS_TO_KPH : MS_TO_MPH));
+
+  bool mainOnLocal = sm["carState"].getCarState().getMainOn();
+  bool lkasEnabledLocal = sm["carState"].getCarState().getLkasEnable();
+  bool adaptiveCruiseLocal = sm["carState"].getCarState().getAdaptiveCruise();
+  setProperty("mainOn", mainOnLocal);
+  setProperty("lkasEnabled", lkasEnabledLocal);
+  setProperty("adaptiveCruise", adaptiveCruiseLocal);
 
   setProperty("is_cruise_set", cruise_set);
   setProperty("speed", QString::number(std::nearbyint(cur_speed)));
@@ -200,7 +211,7 @@ void OnroadHud::paintEvent(QPaintEvent *event) {
   p.setRenderHint(QPainter::Antialiasing);
 
   // Header gradient
-  QLinearGradient bg(0, header_h - (header_h / 2.5), 0, header_h);
+  QLinearGradient bg(0, header_h - (header_h / 3.0), 0, header_h);
   bg.setColorAt(0, QColor::fromRgbF(0, 0, 0, 0.45));
   bg.setColorAt(1, QColor::fromRgbF(0, 0, 0, 0));
   p.fillRect(0, 0, width(), header_h, bg);
@@ -239,6 +250,22 @@ void OnroadHud::paintEvent(QPaintEvent *event) {
     drawIcon(p, radius / 2 + (bdr_s * 2), rect().bottom() - footer_h / 2,
              dm_img, QColor(0, 0, 0, 70), dmActive ? 1.0 : 0.2);
   }
+
+
+  //lkas icon
+  if ( (adaptiveCruise && lkasEnabled) || mainOn ) {
+    drawIcon(p, rect().center() - radius / 2 - bdr_s * 2 - 24, radius / 2 + int(bdr_s * 1.5),
+             lat_icon_img, QColor(0, 0, 0, 70), 1.0);
+  }
+  //long icon
+  if(adaptiveCruise) {
+    drawIcon(p, rect().center() + radius / 2 + bdr_s * 2 + 24, radius / 2 + int(bdr_s * 1.5),
+             long_img, QColor(0, 0, 0, 70), 1.0);
+
+  }
+
+
+
 }
 
 void OnroadHud::drawText(QPainter &p, int x, int y, const QString &text, int alpha) {
