@@ -254,12 +254,12 @@ void OnroadHud::paintEvent(QPaintEvent *event) {
 
   //lkas icon
   if ( (adaptiveCruise && lkasEnabled) || mainOn ) {
-    drawIcon(p, rect().center() - radius / 2 - bdr_s * 2 - 24, radius / 2 + int(bdr_s * 1.5),
+    drawIcon(p, rect().center() - radius / 2 - bdr_s * 2 , radius / 2 + int(bdr_s * 1.5),
              lat_icon_img, QColor(0, 0, 0, 70), 1.0);
   }
   //long icon
   if(adaptiveCruise) {
-    drawIcon(p, rect().center() + radius / 2 + bdr_s * 2 + 24, radius / 2 + int(bdr_s * 1.5),
+    drawIcon(p, rect().center() + radius / 2 + bdr_s * 2 , radius / 2 + int(bdr_s * 1.5),
              long_img, QColor(0, 0, 0, 70), 1.0);
 
   }
