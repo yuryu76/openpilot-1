@@ -75,11 +75,11 @@ class CarController():
     comma_pedal =0  #for supress linter error.
     accelMultiplier = 0.475 #default initializer.
     if CS.out.vEgo * CV.MS_TO_KPH < 10 :
-      accelMultiplier = 0.35
+      accelMultiplier = 0.375
     elif CS.out.vEgo * CV.MS_TO_KPH < 40 :
-      accelMultiplier = 0.525
+      accelMultiplier = 0.485
     else : # above 40 km/h
-      accelMultiplier = 0.415
+      accelMultiplier = 0.425
 
     if not enabled or not CS.adaptive_Cruise or not CS.CP.enableGasInterceptor:
       comma_pedal = 0
