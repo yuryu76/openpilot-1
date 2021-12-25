@@ -12,7 +12,6 @@ VisualAlert = car.CarControl.HUDControl.VisualAlert
 VEL = [13.889, 16.667, 25.]  # velocities
 MIN_PEDAL = [0.02, 0.05, 0.1]
 
-
 def accel_hysteresis(accel, accel_steady):
     # for small accel oscillations less than 0.02, don't change the accel command
     if accel > accel_steady + 0.02:
@@ -23,7 +22,6 @@ def accel_hysteresis(accel, accel_steady):
 
     return accel, accel_steady
 
-
 class CarController():
   def __init__(self, dbc_name, CP, VM):
     self.start_time = 0.
@@ -32,8 +30,7 @@ class CarController():
     self.lka_icon_status_last = (False, False)
     self.steer_rate_limited = False
     
-    self.accel_steady = 0.
-    
+    self.accel_steady = 0.    
     self.params = CarControllerParams()
 
     self.packer_pt = CANPacker(DBC[CP.carFingerprint]['pt'])
@@ -47,8 +44,6 @@ class CarController():
 
     # Send CAN commands.
     can_sends = []
-
-    # STEER
 
     # Steering (50Hz)
     # Avoid GM EPS faults when transmitting messages too close together: skip this transmit if we just received the
@@ -75,9 +70,9 @@ class CarController():
     comma_pedal =0  #for supress linter error.
     accelMultiplier = 0.475 #default initializer.
     if CS.out.vEgo * CV.MS_TO_KPH < 10 :
-      accelMultiplier = 0.375
+      accelMultiplier = 0.400
     elif CS.out.vEgo * CV.MS_TO_KPH < 40 :
-      accelMultiplier = 0.485
+      accelMultiplier = 0.475
     else : # above 40 km/h
       accelMultiplier = 0.425
 
@@ -87,33 +82,16 @@ class CarController():
       minimumPedalOutputBySpeed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
       pedal_accel = actuators.accel * accelMultiplier
       comma_pedal = clip(pedal_accel, minimumPedalOutputBySpeed, 1.)
-#      comma_pedal = clip(actuators.accel, 0., 1.)
-
       comma_pedal, self.accel_steady = accel_hysteresis(comma_pedal, self.accel_steady)
+            
+      if actuators.accel < 0.1:
+        can_sends.append(gmcan.create_regen_paddle_command(self.packer_pt, CanBus.POWERTRAIN))
 
     if (frame % 4) == 0:
       idx = (frame // 4) % 4
 
       can_sends.append(create_gas_interceptor_command(self.packer_pt, comma_pedal, idx))
       
-      
-##페달에 accel, brake 개념 적용시      
-#    if CS.CP.enableGasInterceptor and (frame % 2) == 0:
-#      if not enabled or not CS.adaptive_Cruise:
-#        final_pedal = 0
-#      elif CS.adaptive_Cruise:
-#        min_pedal_speed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
-#        pedal_accel = actuators.accel / 4
-#        pedal = clip(pedal_accel, min_pedal_speed, 1.)
-#        regen = - pedal_accel
-#        pedal, self.accel_steady = accel_hysteresis(pedal, self.accel_steady)
-#        final_pedal = clip(pedal - regen, 0., 1.)
-#        if regen > 0.1:
-#          can_sends.append(gmcan.create_regen_paddle_command(self.packer_pt, CanBus.POWERTRAIN))
-
-#        idx = (frame // 2) % 4
-#        can_sends.append(create_gas_command(self.packer_pt, final_pedal, idx))
-
     # Send dashboard UI commands (ACC status), 25hz
     #if (frame % 4) == 0:
     #  send_fcw = hud_alert == VisualAlert.fcw
