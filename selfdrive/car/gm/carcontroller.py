@@ -80,7 +80,7 @@ class CarController():
       comma_pedal = 0
     elif CS.adaptive_Cruise:
       minimumPedalOutputBySpeed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
-      pedal_accel = actuators.accel * accelMultiplier
+      pedal_accel = actuators.accel * 0.45
       comma_pedal = clip(pedal_accel, minimumPedalOutputBySpeed, 1.)
       comma_pedal, self.accel_steady = accel_hysteresis(comma_pedal, self.accel_steady)
             
