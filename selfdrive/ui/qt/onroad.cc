@@ -296,6 +296,10 @@ void NvgWindow::initializeGL() {
 
   prev_draw_t = millis_since_boot();
   setBackgroundColor(bg_colors[STATUS_DISENGAGED]);
+
+  // nda
+  ic_nda = QPixmap("../assets/images/img_nda.png");
+  ic_hda = QPixmap("../assets/images/img_hda.png");
 }
 
 void NvgWindow::updateFrameMat(int w, int h) {
@@ -392,6 +396,9 @@ void NvgWindow::paintGL() {
         drawLead(painter, leads[1], s->scene.lead_vertices[1]);
       }
     }
+
+    // nda
+    drawSpeedLimit(painter);
   }
 
   double cur_draw_t = millis_since_boot();
@@ -408,4 +415,78 @@ void NvgWindow::showEvent(QShowEvent *event) {
 
   ui_update_params(uiState());
   prev_draw_t = millis_since_boot();
+}
+
+// nda
+void NvgWindow::drawSpeedLimit(QPainter &p) {
+  const SubMaster &sm = *(uiState()->sm);
+  auto roadLimitSpeed = sm["roadLimitSpeed"].getRoadLimitSpeed();
+
+  int activeNDA = roadLimitSpeed.getActive();
+
+  int camLimitSpeed = roadLimitSpeed.getCamLimitSpeed();
+  int camLimitSpeedLeftDist = roadLimitSpeed.getCamLimitSpeedLeftDist();
+
+  int sectionLimitSpeed = roadLimitSpeed.getSectionLimitSpeed();
+  int sectionLeftDist = roadLimitSpeed.getSectionLeftDist();
+
+  int limit_speed = 0;
+  int left_dist = 0;
+
+  if(camLimitSpeed >= 30 && camLimitSpeedLeftDist > 0) {
+    limit_speed = camLimitSpeed;
+    left_dist = camLimitSpeedLeftDist;
+  }
+  else if(sectionLimitSpeed >= 30 && sectionLeftDist > 0) {
+    limit_speed = sectionLimitSpeed;
+    left_dist = sectionLeftDist;
+  }
+
+  if(activeNDA > 0)
+  {
+      int w = 120;
+      int h = 54;
+      int x = (width() + (bdr_s*2))/2 - w/2 - bdr_s;
+      int y = 40 - bdr_s;
+
+      p.setOpacity(1.f);
+      p.drawPixmap(x, y, w, h, activeNDA == 1 ? ic_nda : ic_hda);
+  }
+
+  if(limit_speed > 10 && left_dist > 0)
+  {
+    int radius = 192;
+
+    int x = 30;
+    int y = 270;
+
+    p.setPen(Qt::NoPen);
+    p.setBrush(QBrush(QColor(255, 0, 0, 255)));
+    QRect rect = QRect(x, y, radius, radius);
+    p.drawEllipse(rect);
+
+    p.setBrush(QBrush(QColor(255, 255, 255, 255)));
+
+    const int tickness = 14;
+    rect.adjust(tickness, tickness, -tickness, -tickness);
+    p.drawEllipse(rect);
+
+    QString str_limit_speed, str_left_dist;
+    str_limit_speed.sprintf("%d", limit_speed);
+
+    if(left_dist >= 1000)
+      str_left_dist.sprintf("%.1fkm", left_dist / 1000.f);
+    else
+      str_left_dist.sprintf("%dm", left_dist);
+
+    configFont(p, "Open Sans", 80, "Bold");
+    p.setPen(QColor(0, 0, 0, 230));
+    p.drawText(rect, Qt::AlignCenter, str_limit_speed);
+
+    configFont(p, "Open Sans", 60, "Bold");
+    rect.translate(0, radius/2 + 45);
+    rect.adjust(-30, 0, 30, 0);
+    p.setPen(QColor(255, 255, 255, 230));
+    p.drawText(rect, Qt::AlignCenter, str_left_dist);
+  }
 }

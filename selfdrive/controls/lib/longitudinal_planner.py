@@ -11,6 +11,7 @@ from selfdrive.controls.lib.longcontrol import LongCtrlState
 from selfdrive.controls.lib.longitudinal_mpc_lib.long_mpc import LongitudinalMpc
 from selfdrive.controls.lib.longitudinal_mpc_lib.long_mpc import T_IDXS as T_IDXS_MPC
 from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX, CONTROL_N
+from selfdrive.road_speed_limiter import get_road_speed_limiter
 from selfdrive.swaglog import cloudlog
 
 LON_MPC_STEP = 0.2  # first step is 0.2s
@@ -63,6 +64,13 @@ class Planner:
     v_cruise_kph = sm['controlsState'].vCruise
     v_cruise_kph = min(v_cruise_kph, V_CRUISE_MAX)
     v_cruise = v_cruise_kph * CV.KPH_TO_MS
+
+    road_speed_limiter = get_road_speed_limiter()
+    apply_limit_speed, road_limit_speed, left_dist, first_started, max_speed_log = \
+      road_speed_limiter.get_max_speed(v_ego * CV.MS_TO_KPH, True)
+
+    if apply_limit_speed >= 30:
+      v_cruise = min(v_cruise, apply_limit_speed * CV.KPH_TO_MS)
 
     long_control_state = sm['controlsState'].longControlState
     force_slow_decel = sm['controlsState'].forceDecel
