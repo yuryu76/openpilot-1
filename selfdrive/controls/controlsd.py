@@ -441,7 +441,7 @@ class Controls:
       if CS.regenPressed:
         self.v_cruise_kph = update_v_cruise_regen(CS.vEgo, self.v_cruise_kph, CS.regenPressed, self.enabled)
     elif not CS.adaptiveCruise and CS.cruiseState.enabled:
-      self.v_cruise_kph = 30
+      self.v_cruise_kph = 40
 
     # decrement the soft disable timer at every step, as it's reset on
     # entrance in SOFT_DISABLING state
