@@ -28,7 +28,7 @@ def compute_gas_brake(accel, speed):
   creep_brake_value = 0.15
   if speed < creep_speed:
     creep_brake = (creep_speed - speed) / creep_speed * creep_brake_value
-  gb = float(accel) / 3.0 - creep_brake
+  gb = float(accel) / 4.0 - creep_brake
   return clip(gb, 0.0, 1.0), clip(-gb, 0.0, 1.0)
 
 class CarController():
@@ -95,7 +95,7 @@ class CarController():
     if not enabled or not CS.adaptive_Cruise or not CS.CP.enableGasInterceptor:
       comma_pedal = 0
     elif CS.adaptive_Cruise:
-      gas_mult = interp(CS.out.vEgo, [0., 10.], [0.4, 1.0])
+      gas_mult = interp(CS.out.vEgo, [0., 5.], [0.4, 1.0])
       comma_pedal = clip(gas_mult * (gas - brake), 0., 1.)
     
 #      minimumPedalOutputBySpeed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
