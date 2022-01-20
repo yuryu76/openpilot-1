@@ -95,7 +95,7 @@ class CarController():
     if not enabled or not CS.adaptive_Cruise or not CS.CP.enableGasInterceptor:
       comma_pedal = 0
     elif CS.adaptive_Cruise:
-      gas_mult = interp(CS.out.vEgo, [0., 5.], [0.4, 1.0])
+      gas_mult = interp(CS.out.vEgo, [0., 5.], [0.6, 1.0])
       comma_pedal = clip(gas_mult * (gas - brake), 0., 1.)
     
 #      minimumPedalOutputBySpeed = interp(CS.out.vEgo, VEL, MIN_PEDAL)
