@@ -43,6 +43,28 @@ OnroadWindow::OnroadWindow(QWidget *parent) : QWidget(parent) {
   setAttribute(Qt::WA_OpaquePaintEvent);
   QObject::connect(uiState(), &UIState::uiUpdate, this, &OnroadWindow::updateState);
   QObject::connect(uiState(), &UIState::offroadTransition, this, &OnroadWindow::offroadTransition);
+
+#ifdef QCOM2
+  // screen recoder - neokii
+  record_timer = std::make_shared<QTimer>();
+	QObject::connect(record_timer.get(), &QTimer::timeout, [=]() {
+    if(recorder) {
+      recorder->update_screen();
+    }
+  });
+	record_timer->start(1000/UI_FREQ);
+
+  QWidget* recorder_widget = new QWidget(this);
+  QVBoxLayout * recorder_layout = new QVBoxLayout (recorder_widget);
+  recorder_layout->setMargin(35);
+  recorder = new ScreenRecoder(this);
+  recorder_layout->addWidget(recorder);
+  recorder_layout->setAlignment(recorder, Qt::AlignRight | Qt::AlignBottom);
+
+  stacked_layout->addWidget(recorder_widget);
+  recorder_widget->raise();
+  alerts->raise();
+#endif
 }
 
 void OnroadWindow::updateState(const UIState &s) {
