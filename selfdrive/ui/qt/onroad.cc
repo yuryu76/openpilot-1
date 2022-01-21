@@ -439,7 +439,288 @@ void NvgWindow::showEvent(QShowEvent *event) {
   prev_draw_t = millis_since_boot();
 }
 
-// nda
+void NvgWindow::drawText(QPainter &p, int x, int y, const QString &text, int alpha) {
+  QFontMetrics fm(p.font());
+  QRect init_rect = fm.boundingRect(text);
+  QRect real_rect = fm.boundingRect(init_rect, 0, text);
+  real_rect.moveCenter({x, y - real_rect.height() / 2});
+
+  p.setPen(QColor(0xff, 0xff, 0xff, alpha));
+  p.drawText(real_rect.x(), real_rect.bottom(), text);
+}
+
+void NvgWindow::drawTextWithColor(QPainter &p, int x, int y, const QString &text, QColor& color) {
+  QFontMetrics fm(p.font());
+  QRect init_rect = fm.boundingRect(text);
+  QRect real_rect = fm.boundingRect(init_rect, 0, text);
+  real_rect.moveCenter({x, y - real_rect.height() / 2});
+
+  p.setPen(color);
+  p.drawText(real_rect.x(), real_rect.bottom(), text);
+}
+
+void NvgWindow::drawIcon(QPainter &p, int x, int y, QPixmap &img, QBrush bg, float opacity) {
+  p.setPen(Qt::NoPen);
+  p.setBrush(bg);
+  p.drawEllipse(x - radius / 2, y - radius / 2, radius, radius);
+  p.setOpacity(opacity);
+  p.drawPixmap(x - img_size / 2, y - img_size / 2, img_size, img_size, img);
+}
+
+void NvgWindow::drawText2(QPainter &p, int x, int y, int flags, const QString &text, const QColor& color) {
+  QFontMetrics fm(p.font());
+  QRect rect = fm.boundingRect(text);
+  p.setPen(color);
+  p.drawText(QRect(x, y, rect.width(), rect.height()), flags, text);
+}
+
+void NvgWindow::drawHud(QPainter &p) {
+
+  p.setRenderHint(QPainter::Antialiasing);
+  p.setPen(Qt::NoPen);
+  p.setOpacity(1.);
+
+  // Header gradient
+  QLinearGradient bg(0, header_h - (header_h / 2.5), 0, header_h);
+  bg.setColorAt(0, QColor::fromRgbF(0, 0, 0, 0.45));
+  bg.setColorAt(1, QColor::fromRgbF(0, 0, 0, 0));
+  p.fillRect(0, 0, width(), header_h, bg);
+
+  UIState *s = uiState();
+
+  const SubMaster &sm = *(s->sm);
+
+  drawLaneLines(p, s->scene);
+
+  auto leads = sm["modelV2"].getModelV2().getLeadsV3();
+  if (leads[0].getProb() > .5) {
+    drawLead(p, leads[0], s->scene.lead_vertices[0], s->scene.lead_radar[0]);
+  }
+  if (leads[1].getProb() > .5 && (std::abs(leads[1].getX()[0] - leads[0].getX()[0]) > 3.0)) {
+    drawLead(p, leads[1], s->scene.lead_vertices[1], s->scene.lead_radar[1]);
+  }
+
+  drawMaxSpeed(p);
+  drawSpeed(p);
+  drawSpeedLimit(p);
+  drawTurnSignals(p);
+  drawGpsStatus(p);
+
+  if(s->show_debug && width() > 1200)
+    drawDebugText(p);
+
+  const auto controls_state = sm["controlsState"].getControlsState();
+  const auto car_params = sm["carParams"].getCarParams();
+  const auto live_params = sm["liveParameters"].getLiveParameters();
+
+  const auto scc_smoother = sm["carControl"].getCarControl().getSccSmoother();
+  bool is_metric = s->scene.is_metric;
+  bool long_control = scc_smoother.getLongControl();
+
+  // kph
+  float applyMaxSpeed = scc_smoother.getApplyMaxSpeed();
+  float cruiseMaxSpeed = scc_smoother.getCruiseMaxSpeed();
+
+  bool is_cruise_set = (cruiseMaxSpeed > 0 && cruiseMaxSpeed < 255);
+
+  int mdps_bus = car_params.getMdpsBus();
+  int scc_bus = car_params.getSccBus();
+
+  QString infoText;
+  infoText.sprintf("AO(%.2f/%.2f) SR(%.2f) SRC(%.2f) SAD(%.2f) MDPS(%d) SCC(%d) LAD(%.2f/%.2f) SCC(%.2f/%.2f/%.2f)",
+                      live_params.getAngleOffsetDeg(),
+                      live_params.getAngleOffsetAverageDeg(),
+                      controls_state.getSteerRatio(),
+                      controls_state.getSteerRateCost(),
+                      controls_state.getSteerActuatorDelay(),
+                      mdps_bus, scc_bus,
+                      controls_state.getLongitudinalActuatorDelayLowerBound(),
+                      controls_state.getLongitudinalActuatorDelayUpperBound(),
+                      controls_state.getSccGasFactor(),
+                      controls_state.getSccBrakeFactor(),
+                      controls_state.getSccCurvatureFactor()
+                      );
+
+  // info
+  configFont(p, "Open Sans", 34, "Regular");
+  p.setPen(QColor(0xff, 0xff, 0xff, 200));
+  p.drawText(rect().left() + 20, rect().height() - 15, infoText);
+
+  drawBottomIcons(p);
+}
+
+static const QColor get_tpms_color(float tpms) {
+    if(tpms < 5 || tpms > 60) // N/A
+        return QColor(255, 255, 255, 220);
+    if(tpms < 31)
+        return QColor(255, 90, 90, 220);
+    return QColor(255, 255, 255, 220);
+}
+
+static const QString get_tpms_text(float tpms) {
+    if(tpms < 5 || tpms > 60)
+        return "";
+
+    char str[32];
+    snprintf(str, sizeof(str), "%.0f", round(tpms));
+    return QString(str);
+}
+
+void NvgWindow::drawBottomIcons(QPainter &p) {
+  const SubMaster &sm = *(uiState()->sm);
+  auto car_state = sm["carState"].getCarState();
+  auto scc_smoother = sm["carControl"].getCarControl().getSccSmoother();
+
+  int x = radius / 2 + (bdr_s * 2) + (radius + 50);
+  const int y = rect().bottom() - footer_h / 2 - 10;
+
+  // tire pressure
+  {
+    const int w = 58;
+    const int h = 126;
+    const int x = 110;
+    const int y = height() - h - 80;
+
+    auto tpms = car_state.getTpms();
+    const float fl = tpms.getFl();
+    const float fr = tpms.getFr();
+    const float rl = tpms.getRl();
+    const float rr = tpms.getRr();
+
+    p.setOpacity(0.8);
+    p.drawPixmap(x, y, w, h, ic_tire_pressure);
+
+    configFont(p, "Open Sans", 38, "Bold");
+
+    QFontMetrics fm(p.font());
+    QRect rcFont = fm.boundingRect("9");
+
+    int center_x = x + 4;
+    int center_y = y + h/2;
+    const int marginX = (int)(rcFont.width() * 2.7f);
+    const int marginY = (int)((h/2 - rcFont.height()) * 0.7f);
+
+    drawText2(p, center_x-marginX, center_y-marginY-rcFont.height(), Qt::AlignRight, get_tpms_text(fl), get_tpms_color(fl));
+    drawText2(p, center_x+marginX, center_y-marginY-rcFont.height(), Qt::AlignLeft, get_tpms_text(fr), get_tpms_color(fr));
+    drawText2(p, center_x-marginX, center_y+marginY, Qt::AlignRight, get_tpms_text(rl), get_tpms_color(rl));
+    drawText2(p, center_x+marginX, center_y+marginY, Qt::AlignLeft, get_tpms_text(rr), get_tpms_color(rr));
+  }
+
+  // cruise gap
+  int gap = car_state.getCruiseGap();
+  bool longControl = scc_smoother.getLongControl();
+  int autoTrGap = scc_smoother.getAutoTrGap();
+
+  p.setPen(Qt::NoPen);
+  p.setBrush(QBrush(QColor(0, 0, 0, 255 * .1f)));
+  p.drawEllipse(x - radius / 2, y - radius / 2, radius, radius);
+
+  QString str;
+  float textSize = 50.f;
+  QColor textColor = QColor(255, 255, 255, 200);
+
+  if(gap <= 0) {
+    str = "N/A";
+  }
+  else if(longControl && gap == autoTrGap) {
+    str = "AUTO";
+    textColor = QColor(120, 255, 120, 200);
+  }
+  else {
+    str.sprintf("%d", (int)gap);
+    textColor = QColor(120, 255, 120, 200);
+    textSize = 70.f;
+  }
+
+  configFont(p, "Open Sans", 35, "Bold");
+  drawText(p, x, y-20, "GAP", 200);
+
+  configFont(p, "Open Sans", textSize, "Bold");
+  drawTextWithColor(p, x, y+50, str, textColor);
+
+  // brake
+  x = radius / 2 + (bdr_s * 2) + (radius + 50) * 2;
+  bool brake_valid = car_state.getBrakeLights();
+  float img_alpha = brake_valid ? 1.0f : 0.15f;
+  float bg_alpha = brake_valid ? 0.3f : 0.1f;
+  drawIcon(p, x, y, ic_brake, QColor(0, 0, 0, (255 * bg_alpha)), img_alpha);
+
+  // auto hold
+  int autohold = car_state.getAutoHold();
+  if(autohold >= 0) {
+    x = radius / 2 + (bdr_s * 2) + (radius + 50) * 3;
+    img_alpha = autohold > 0 ? 1.0f : 0.15f;
+    bg_alpha = autohold > 0 ? 0.3f : 0.1f;
+    drawIcon(p, x, y, autohold > 1 ? ic_autohold_warning : ic_autohold_active,
+            QColor(0, 0, 0, (255 * bg_alpha)), img_alpha);
+  }
+
+  p.setOpacity(1.);
+}
+
+void NvgWindow::drawMaxSpeed(QPainter &p) {
+  UIState *s = uiState();
+  const SubMaster &sm = *(s->sm);
+  const auto scc_smoother = sm["carControl"].getCarControl().getSccSmoother();
+  bool is_metric = s->scene.is_metric;
+  bool long_control = scc_smoother.getLongControl();
+
+  // kph
+  float applyMaxSpeed = scc_smoother.getApplyMaxSpeed();
+  float cruiseMaxSpeed = scc_smoother.getCruiseMaxSpeed();
+  bool is_cruise_set = (cruiseMaxSpeed > 0 && cruiseMaxSpeed < 255);
+
+  QRect rc(30, 30, 184, 202);
+  p.setPen(QPen(QColor(0xff, 0xff, 0xff, 100), 10));
+  p.setBrush(QColor(0, 0, 0, 100));
+  p.drawRoundedRect(rc, 20, 20);
+  p.setPen(Qt::NoPen);
+
+  if (is_cruise_set) {
+    char str[256];
+    if (is_metric)
+        snprintf(str, sizeof(str), "%d", (int)(applyMaxSpeed + 0.5));
+    else
+        snprintf(str, sizeof(str), "%d", (int)(applyMaxSpeed*KM_TO_MILE + 0.5));
+
+    configFont(p, "Open Sans", 45, "Bold");
+    drawText(p, rc.center().x(), 100, str, 255);
+
+    if (is_metric)
+        snprintf(str, sizeof(str), "%d", (int)(cruiseMaxSpeed + 0.5));
+    else
+        snprintf(str, sizeof(str), "%d", (int)(cruiseMaxSpeed*KM_TO_MILE + 0.5));
+
+    configFont(p, "Open Sans", 76, "Bold");
+    drawText(p, rc.center().x(), 195, str, 255);
+  } else {
+    if(long_control) {
+      configFont(p, "Open Sans", 48, "sans-semibold");
+      drawText(p, rc.center().x(), 100, "OP", 100);
+    }
+    else {
+      configFont(p, "Open Sans", 48, "sans-semibold");
+      drawText(p, rc.center().x(), 100, "MAX", 100);
+    }
+
+    configFont(p, "Open Sans", 76, "sans-semibold");
+    drawText(p, rc.center().x(), 195, "N/A", 100);
+  }
+}
+
+void NvgWindow::drawSpeed(QPainter &p) {
+  UIState *s = uiState();
+  const SubMaster &sm = *(s->sm);
+  float cur_speed = std::max(0.0, sm["carState"].getCarState().getCluSpeedMs() * (s->scene.is_metric ? MS_TO_KPH : MS_TO_MPH));
+
+  QString speed;
+  speed.sprintf("%.0f", cur_speed);
+  configFont(p, "Open Sans", 176, "Bold");
+  drawText(p, rect().center().x(), 230, speed);
+  configFont(p, "Open Sans", 66, "Regular");
+  drawText(p, rect().center().x(), 310, s->scene.is_metric ? "km/h" : "mph", 200);
+}
+
 void NvgWindow::drawSpeedLimit(QPainter &p) {
   const SubMaster &sm = *(uiState()->sm);
   auto roadLimitSpeed = sm["roadLimitSpeed"].getRoadLimitSpeed();
@@ -511,4 +792,111 @@ void NvgWindow::drawSpeedLimit(QPainter &p) {
     p.setPen(QColor(255, 255, 255, 230));
     p.drawText(rect, Qt::AlignCenter, str_left_dist);
   }
+void NvgWindow::drawTurnSignals(QPainter &p) {
+  static int blink_index = 0;
+  static int blink_wait = 0;
+  static double prev_ts = 0.0;
+
+  if(blink_wait > 0) {
+    blink_wait--;
+    blink_index = 0;
+  }
+  else {
+    const SubMaster &sm = *(uiState()->sm);
+    auto car_state = sm["carState"].getCarState();
+    bool left_on = car_state.getLeftBlinker();
+    bool right_on = car_state.getRightBlinker();
+
+    const float img_alpha = 0.8f;
+    const int fb_w = width() / 2 - 200;
+    const int center_x = width() / 2;
+    const int w = fb_w / 25;
+    const int h = 160;
+    const int gap = fb_w / 25;
+    const int margin = (int)(fb_w / 3.8f);
+    const int base_y = (height() - h) / 2;
+    const int draw_count = 8;
+
+    int x = center_x;
+    int y = base_y;
+
+    if(left_on) {
+      for(int i = 0; i < draw_count; i++) {
+        float alpha = img_alpha;
+        int d = std::abs(blink_index - i);
+        if(d > 0)
+          alpha /= d*2;
+
+        p.setOpacity(alpha);
+        float factor = (float)draw_count / (i + draw_count);
+        p.drawPixmap(x - w - margin, y + (h-h*factor)/2, w*factor, h*factor, ic_turn_signal_l);
+        x -= gap + w;
+      }
+    }
+
+    x = center_x;
+    if(right_on) {
+      for(int i = 0; i < draw_count; i++) {
+        float alpha = img_alpha;
+        int d = std::abs(blink_index - i);
+        if(d > 0)
+          alpha /= d*2;
+
+        float factor = (float)draw_count / (i + draw_count);
+        p.setOpacity(alpha);
+        p.drawPixmap(x + margin, y + (h-h*factor)/2, w*factor, h*factor, ic_turn_signal_r);
+        x += gap + w;
+      }
+    }
+
+    if(left_on || right_on) {
+
+      double now = millis_since_boot();
+      if(now - prev_ts > 900/UI_FREQ) {
+        prev_ts = now;
+        blink_index++;
+      }
+
+      if(blink_index >= draw_count) {
+        blink_index = draw_count - 1;
+        blink_wait = UI_FREQ/4;
+      }
+    }
+    else {
+      blink_index = 0;
+    }
+  }
+
+  p.setOpacity(1.);
+}
+
+void NvgWindow::drawGpsStatus(QPainter &p) {
+  const SubMaster &sm = *(uiState()->sm);
+  auto gps = sm["gpsLocationExternal"].getGpsLocationExternal();
+  float accuracy = gps.getAccuracy();
+  if(accuracy < 0.01f || accuracy > 20.f)
+    return;
+
+  int w = 120;
+  int h = 100;
+  int x = width() - w - 30;
+  int y = 30;
+
+  p.setOpacity(0.8);
+  p.drawPixmap(x, y, w, h, ic_satellite);
+
+  configFont(p, "Open Sans", 40, "Bold");
+  p.setPen(QColor(255, 255, 255, 200));
+  p.setRenderHint(QPainter::TextAntialiasing);
+
+  QRect rect = QRect(x, y + h + 10, w, 40);
+  rect.adjust(-30, 0, 30, 0);
+
+  QString str;
+  str.sprintf("%.1fm", accuracy);
+  p.drawText(rect, Qt::AlignHCenter, str);
+  p.setOpacity(1.);
+}
+
+
 }
