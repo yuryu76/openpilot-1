@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 import time
+from multiprocessing import Process
 from cereal import messaging, log
 from selfdrive.manager.process_config import managed_processes
+from selfdrive.manager.process import launcher
 
 if __name__ == "__main__":
+
+  road_speed_limiter = Process(name="road_speed_limiter", target=launcher, args=("selfdrive.road_speed_limiter",))
+  road_speed_limiter.start()
+
   procs = ['camerad', 'ui', 'modeld', 'calibrationd']
 
   for p in procs:
@@ -27,3 +33,5 @@ if __name__ == "__main__":
   except KeyboardInterrupt:
     for p in procs:
       managed_processes[p].stop()
+
+    road_speed_limiter.terminate()

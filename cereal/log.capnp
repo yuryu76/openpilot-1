@@ -1430,6 +1430,18 @@ struct NavRoute {
   }
 }
 
+struct RoadLimitSpeed {
+    active @0 :Int16;
+    roadLimitSpeed @1 :Int16;
+    isHighway @2 :Bool;
+    camType @3 :Int16;
+    camLimitSpeedLeftDist @4 :Int16;
+    camLimitSpeed @5 :Int16;
+    sectionLimitSpeed @6 :Int16;
+    sectionLeftDist @7 :Int16;
+    camSpeedFactor @8 :Float32;
+}
+
 struct Event {
   logMonoTime @0 :UInt64;  # nanoseconds
   valid @67 :Bool = true;
@@ -1491,6 +1503,9 @@ struct Event {
     navInstruction @82 :NavInstruction;
     navRoute @83 :NavRoute;
     navThumbnail @84: Thumbnail;
+
+    # neokii
+    roadLimitSpeed @85 :RoadLimitSpeed;
 
     # *********** debug ***********
     testJoystick @52 :Joystick;
