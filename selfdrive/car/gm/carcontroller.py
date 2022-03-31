@@ -149,7 +149,8 @@ class CarController():
           #   # TODO: Determine if this clipping is correct
           #   pedal_gas = clip(actuators.accel, 0., 1.)
           #TODO: Add alert when not in L mode
-          pedal_gas = clip(actuators.accel, 0., 1.)
+          acc_mult = interp(CS.out.vEgo, [0., 5.], [0.17, 0.25])
+          pedal_gas = clip(actuators.accel*acc_mult, 0., 1.)
           can_sends.append(create_gas_interceptor_command(self.packer_pt, pedal_gas, idx))
         else:
           can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_gas, idx, enabled, at_full_stop))
